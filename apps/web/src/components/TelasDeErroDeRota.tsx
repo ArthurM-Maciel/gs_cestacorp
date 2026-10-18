@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 
 import { CartaoDeMensagem } from './CartaoDeMensagem.js';
-import { botaoPrimario } from './estilos-de-botao.js';
+import { botaoPrimario } from './ui/estilos-de-botao.js';
 
 export function PaginaNaoEncontrada() {
   return (
