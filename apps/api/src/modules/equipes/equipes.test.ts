@@ -479,4 +479,30 @@ describe('US03 — equipes da gincana', () => {
       }
     });
   });
+  describe('trilha de auditoria da equipe', () => {
+    it('descreve a troca de líder com o nome que a equipe passou a ter', async () => {
+      const gincana = await cenario.criarGincana();
+      const equipe = await cenario.criarEquipe(gincana.id, 'Equipe Antes');
+      const pessoa = await cenario.criarPessoa();
+
+      // Renomeia e troca o líder na mesma requisição: a auditoria precisa citar o nome
+      // novo, senão a trilha do selo de qualidade aponta para uma equipe que não existe
+      // mais com aquele nome.
+      const resposta = await request(app)
+        .patch(`/equipes/${equipe.id}`)
+        .set('Authorization', comoAdmin)
+        .send({ nome: 'Equipe Depois', liderId: pessoa.id });
+
+      expect(resposta.status).toBe(200);
+
+      const registros = await prisma.registroAuditoria.findMany({
+        where: { entidade: 'Equipe', entidadeId: equipe.id },
+        orderBy: { criadoEm: 'desc' },
+        take: 1,
+      });
+
+      expect(registros[0]?.descricao).toContain('Equipe Depois');
+      expect(registros[0]?.descricao).not.toContain('Equipe Antes');
+    });
+  });
 });
