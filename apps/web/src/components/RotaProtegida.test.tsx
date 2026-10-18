@@ -11,6 +11,7 @@ import {
   usuarioDeTeste,
   type RespostaSimulada,
 } from '../simulacao-da-api.js';
+import { rotasSemDados } from '../simulacao-de-lancamentos.js';
 import { renderizarNaRota } from '../utilitarios-de-teste.js';
 
 /** Finge que a pessoa já entrou em outro dia: há um token guardado no navegador. */
@@ -141,58 +142,82 @@ describe('Rotas protegidas', () => {
 
     it('tira do login quem já está autenticado', async () => {
       comSessaoAntiga();
-      simularApi({ 'GET /auth/me': confirmarComo('LIDER') });
+      simularApi({ 'GET /auth/me': confirmarComo('LIDER'), ...rotasSemDados() });
 
       renderizarNaRota('/entrar');
 
-      expect(await screen.findByText(/fila de lançamentos/i)).toBeVisible();
+      expect(
+        await screen.findByRole('heading', { level: 1, name: 'Nenhuma aprovação pendente' }),
+      ).toBeVisible();
       expect(screen.queryByLabelText('E-mail')).not.toBeInTheDocument();
     });
   });
 
   describe('por perfil', () => {
-    it.each<[Papel, string, boolean]>([
-      ['COLABORADOR', '/inicio', true],
-      ['COLABORADOR', '/aprovacoes', false],
-      ['COLABORADOR', '/painel', false],
-      ['LIDER', '/inicio', false],
-      ['LIDER', '/aprovacoes', true],
-      ['LIDER', '/painel', false],
-      ['ADMIN', '/inicio', false],
-      ['ADMIN', '/aprovacoes', true],
-      ['ADMIN', '/painel', true],
-    ])('%s abrindo %s: acesso liberado = %s', async (papel, caminho, liberado) => {
+    const SEM_ACESSO = 'Você não tem acesso a esta página';
+    const INICIO = 'Olá, Pessoa Teste!';
+    const FILA = 'Nenhuma aprovação pendente';
+
+    it.each<[Papel, string, string]>([
+      ['COLABORADOR', '/inicio', INICIO],
+      ['COLABORADOR', '/aprovacoes', SEM_ACESSO],
+      ['COLABORADOR', '/painel', SEM_ACESSO],
+      // O líder também participa da gincana: registra e acompanha as próprias ações.
+      ['LIDER', '/inicio', INICIO],
+      ['LIDER', '/aprovacoes', FILA],
+      ['LIDER', '/painel', SEM_ACESSO],
+      ['ADMIN', '/inicio', SEM_ACESSO],
+      ['ADMIN', '/aprovacoes', FILA],
+      ['ADMIN', '/painel', INICIO],
+    ])('%s abrindo %s vê "%s"', async (papel, caminho, titulo) => {
       comSessaoAntiga();
-      simularApi({ 'GET /auth/me': confirmarComo(papel) });
+      simularApi({ 'GET /auth/me': confirmarComo(papel), ...rotasSemDados() });
 
       renderizarNaRota(caminho);
 
-      const titulo = liberado ? 'Olá, Pessoa Teste!' : 'Você não tem acesso a esta página';
+      expect(await screen.findByRole('heading', { level: 1, name: titulo })).toBeVisible();
+    });
+
+    it.each<[Papel, boolean]>([
+      ['COLABORADOR', true],
+      ['LIDER', true],
+      ['ADMIN', false],
+    ])('%s abrindo /registrar: acesso liberado = %s', async (papel, liberado) => {
+      comSessaoAntiga();
+      simularApi({ 'GET /auth/me': confirmarComo(papel), ...rotasSemDados() });
+
+      renderizarNaRota('/registrar');
+
+      // Sem gincana cadastrada no teste, quem tem acesso vê o aviso de "nenhuma gincana ativa".
+      const titulo = liberado ? 'Nenhuma gincana ativa agora' : 'Você não tem acesso a esta página';
       expect(await screen.findByRole('heading', { name: titulo })).toBeVisible();
     });
 
     it('oferece o caminho de volta ao início do próprio perfil', async () => {
       comSessaoAntiga();
-      simularApi({ 'GET /auth/me': confirmarComo('LIDER') });
+      simularApi({ 'GET /auth/me': confirmarComo('LIDER'), ...rotasSemDados() });
 
       renderizarNaRota('/painel');
       fireEvent.click(await screen.findByRole('link', { name: 'Ir para o meu início' }));
 
-      expect(await screen.findByText(/fila de lançamentos/i)).toBeVisible();
+      expect(
+        await screen.findByRole('heading', { level: 1, name: 'Nenhuma aprovação pendente' }),
+      ).toBeVisible();
     });
   });
 
   describe('ao sair', () => {
     it('não deixa dados da pessoa guardados na memória do app', async () => {
       comSessaoAntiga();
-      simularApi({ 'GET /auth/me': confirmarComo('COLABORADOR') });
+      simularApi({ 'GET /auth/me': confirmarComo('COLABORADOR'), ...rotasSemDados() });
 
       const { queryClient } = renderizarNaRota('/inicio');
       await screen.findByRole('heading', { name: 'Olá, Pessoa Teste!' });
       // Representa o que as telas das próximas histórias vão guardar (lançamentos, placar).
       queryClient.setQueryData(['lancamentos'], [{ id: 'dado-da-pessoa-anterior' }]);
 
-      fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
+      // O "Sair" existe no topo (celular) e no menu lateral (computador): qualquer um serve.
+      fireEvent.click(screen.getAllByRole('button', { name: 'Sair' })[0] as HTMLElement);
       await screen.findByLabelText('E-mail');
 
       expect(queryClient.getQueryData(['lancamentos'])).toBeUndefined();
@@ -201,10 +226,10 @@ describe('Rotas protegidas', () => {
     it('volta ao login e a próxima visita já não encontra a sessão', async () => {
       comSessaoAntiga();
       const confirmar = vi.fn(confirmarComo('COLABORADOR'));
-      simularApi({ 'GET /auth/me': confirmar });
+      simularApi({ 'GET /auth/me': confirmar, ...rotasSemDados() });
 
       const paginaAberta = renderizarNaRota('/inicio');
-      fireEvent.click(await screen.findByRole('button', { name: 'Sair' }));
+      fireEvent.click((await screen.findAllByRole('button', { name: 'Sair' }))[0] as HTMLElement);
 
       expect(await screen.findByLabelText('E-mail')).toBeVisible();
       // Sair é decisão da pessoa, não expiração: não há aviso de sessão vencida.

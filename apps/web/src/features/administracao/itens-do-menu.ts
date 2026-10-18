@@ -1,5 +1,4 @@
-import type { ComponentType, SVGProps } from 'react';
-
+import { type ItemDoMenu } from '../../components/ui/MoldeDeNavegacao.js';
 import {
   IconeAprovacoes,
   IconeColaboradores,
@@ -9,14 +8,6 @@ import {
   IconePlacar,
   IconeRegras,
 } from './IconesDoMenu.js';
-
-export interface ItemDoMenu {
-  chave: string;
-  rotulo: string;
-  Icone: ComponentType<SVGProps<SVGSVGElement>>;
-  /** Telas que existem têm caminho. Sem caminho, a tela é de uma história futura. */
-  caminho: string | null;
-}
 
 /**
  * O menu da administradora. Os itens sem caminho aparecem desabilitados no computador,
@@ -37,6 +28,12 @@ export const itensDoMenu: readonly ItemDoMenu[] = [
     caminho: '/colaboradores',
   },
   { chave: 'regras', rotulo: 'Regras', Icone: IconeRegras, caminho: null },
-  { chave: 'aprovacoes', rotulo: 'Aprovações', Icone: IconeAprovacoes, caminho: null },
+  {
+    chave: 'aprovacoes',
+    rotulo: 'Aprovações',
+    rotuloCurto: 'Aprovar',
+    Icone: IconeAprovacoes,
+    caminho: '/aprovacoes',
+  },
   { chave: 'placar', rotulo: 'Placar', Icone: IconePlacar, caminho: null },
 ];

@@ -29,12 +29,15 @@ describe('Layout da administradora', () => {
         '/colaboradores',
       );
 
+      // A fila de aprovações (US08) é da administradora também: ela aprova de todas as equipes.
+      expect(menu.getByRole('link', { name: 'Aprovações' })).toHaveAttribute('href', '/aprovacoes');
+
       // Nenhum link leva a lugar nenhum: o que ainda não existe só aparece como aviso.
-      for (const futuro of ['Regras', 'Aprovações', 'Placar']) {
+      for (const futuro of ['Regras', 'Placar']) {
         expect(menu.queryByRole('link', { name: new RegExp(futuro) })).not.toBeInTheDocument();
         expect(menu.getByText(futuro)).toBeVisible();
       }
-      expect(menu.getAllByText('Em breve')).toHaveLength(3);
+      expect(menu.getAllByText('Em breve')).toHaveLength(2);
     });
 
     it('mostra o nome da usuária e o perfil no rodapé do menu', async () => {
@@ -93,6 +96,7 @@ describe('Layout da administradora', () => {
         'Gincanas',
         'Equipes',
         'Colaboradores',
+        'Aprovar',
       ]);
       expect(barra.getByRole('link', { name: 'Colaboradores' })).toHaveAttribute(
         'aria-current',
