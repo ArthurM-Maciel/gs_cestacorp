@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    name: Convenções
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Nome do branch
+        env:
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          padrao='^(feat|fix|chore|docs|test|refactor|ci|spike)/US[0-9]{2}-[a-z0-9-]+$'
+          if ! printf '%s' "$BRANCH" | grep -Eq "$padrao"; then
+            echo "::error::Branch '$BRANCH' fora da convenção."
+            echo "Use <tipo>/US<NN>-<descricao>, por exemplo feat/US06-lancar-acao."
+            echo "Tipos válidos: feat, fix, chore, docs, test, refactor, ci, spike."
+            exit 1
+          fi
+
+      - name: Título do pull request
+        env:
+          TITULO: ${{ github.event.pull_request.title }}
+        run: |
+          padrao='^(feat|fix|chore|docs|test|refactor|ci|perf|style)(\((api|web|db|contracts|ci|docs)\))?: .+'
+          if ! printf '%s' "$TITULO" | grep -Eq "$padrao"; then
+            echo "::error::Título fora do padrão de Conventional Commits."
+            echo "O título vira a mensagem do commit no squash merge."
+            echo "Exemplo: feat(api): registra auditoria ao recusar lançamento"
+            exit 1
+          fi
+
+      - name: Referência à história
+        env:
+          TITULO: ${{ github.event.pull_request.title }}
+          CORPO: ${{ github.event.pull_request.body }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          if ! printf '%s %s %s' "$BRANCH" "$TITULO" "$CORPO" | grep -Eq 'US[0-9]{2}'; then
+            echo "::error::Nenhuma história referenciada."
+            echo "Cite a história no corpo do PR com 'Refs: USNN'."
+            exit 1
+          fi
+
+      - name: Autoria dos commits
+        run: |
+          faixa="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          if git log "$faixa" --format='%B' | grep -Eiq 'co-authored-by:.*(claude|copilot|gpt|anthropic|openai)|generated with .*claude'; then
+            echo "::error::Há menção de autoria de IA no histórico deste branch."
+            echo "A autoria do trabalho é das pessoas do squad. Reescreva com git rebase -i."
+            exit 1
+          fi
+
+      - name: Segredos no diff
+        run: |
+          faixa="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          if git diff "$faixa" -- . ':(exclude).github/workflows' \
+            | grep -E '^\+' \
+            | grep -Eiq '(postgres(ql)?://[^[:space:]]*:[^[:space:]]*@|aws_secret_access_key|-----BEGIN [A-Z ]*PRIVATE KEY-----)'; then
+            echo "::error::O diff parece conter credencial. Use variável de ambiente."
+            exit 1
+          fi
+
+      - name: Tamanho do pull request
+        run: |
+          faixa="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+          linhas=$(git diff --numstat "$faixa" \
+            -- . ':(exclude)package-lock.json' ':(exclude)**/*.png' ':(exclude)**/*.svg' \
+            | awk '{ s += $1 + $2 } END { print s + 0 }')
+          echo "Linhas úteis alteradas: $linhas"
+          if [ "$linhas" -gt 400 ]; then
+            echo "::warning::$linhas linhas úteis, acima do limite de 400 combinado no CONTRIBUTING."
+            echo "Explique no PR por que não dá para quebrar em dois."
+          fi
