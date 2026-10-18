@@ -75,7 +75,17 @@ export type RespostaDeAssinatura = z.infer<typeof respostaDeAssinaturaSchema>;
  * navegador deixaria a porta aberta para um PDF de 40 MB entrar na lista de comprovantes.
  */
 export const registrarEvidenciaSchema = z.object({
-  url: z.url({ message: 'Endereço do arquivo inválido.' }).max(2000),
+  /**
+   * Só http(s). `z.url()` sozinho aceita `javascript:` e `data:`, e esta URL acaba num
+   * link que o líder clica para conferir o comprovante antes de aprovar — um endereço
+   * com esquema executável viraria código rodando no navegador dele.
+   */
+  url: z
+    .url({ message: 'Endereço do arquivo inválido.' })
+    .max(2000)
+    .refine((valor) => /^https?:\/\//i.test(valor), {
+      message: 'O endereço do arquivo precisa começar com http:// ou https://.',
+    }),
   publicId: z.string().trim().min(1, 'Identificador do arquivo ausente.').max(255),
   nomeArquivo: nomeDeArquivoSchema,
   mimeType: mimeTypeDeEvidenciaSchema,
