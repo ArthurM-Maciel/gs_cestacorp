@@ -20,12 +20,16 @@ que mudou e diga que o agente `api-dominio` deve adaptar.
 
 1. **Migration é imutável depois de mergeada.** Nunca edite um arquivo de migration que já
    está na `main`. Corrija com uma nova.
-2. **Nunca aplique nada em banco hospedado.** Você testa em PostgreSQL local ou no serviço
-   da integração contínua. `prisma migrate deploy` e `prisma db push` contra homologação
-   ou produção são proibidos aqui — quem faz isso é o pipeline.
+2. **Nunca aplique nada em banco hospedado.** Você testa no PostgreSQL local do
+   `docker compose`. `prisma migrate deploy` e `prisma db push` estão negados nas
+   permissões justamente porque a permissão não sabe distinguir o destino — localmente,
+   use `prisma migrate dev`. Quem aplica em homologação é o pipeline.
 3. **Expand/contract.** Adicionar coluna obrigatória é três passos em pull requests
    separados: coluna opcional, preenchimento dos registros existentes, só então
    obrigatória. Nunca remova uma coluna no mesmo pull request que para de usá-la.
+   Isso importa mais aqui do que em outros projetos: o Prisma não gera migration de
+   reversão. Voltar atrás é sempre escrever uma migration nova, e uma coluna já
+   removida leva junto os dados que havia nela.
 4. **Migration vem em pull request isolado**, nunca junto de funcionalidade. É o que
    permite reverter uma coisa sem derrubar a outra.
 5. **A tabela de auditoria é somente-inclusão.** Nada de `UPDATE` ou `DELETE` nela.
@@ -40,8 +44,11 @@ que mudou e diga que o agente `api-dominio` deve adaptar.
 
 ## Antes de encerrar
 
-Teste a migration nos dois sentidos contra o banco local: aplicar, reverter, aplicar de
-novo. Rode o seed depois e confira que ele roda duas vezes sem duplicar nada.
+Contra o banco local: aplique com `npm run db:migrate -w @gincana/api` e depois recrie
+tudo do zero com `npm run db:reset -w @gincana/api`, que apaga, reaplica e popula. Rode o
+seed uma segunda vez e confira que os totais não mudam — ele precisa ser idempotente.
+
+`migrate reset` destrói dados: confirme com a pessoa antes, mesmo no banco local.
 
 Termine sempre com: o que mudou no modelo e por quê, como testou a reversão, e o que o
 agente `api-dominio` precisa ajustar em seguida.

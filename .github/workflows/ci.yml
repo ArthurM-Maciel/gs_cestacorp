@@ -185,14 +185,14 @@ jobs:
       - run: npm ci
       - run: npm run db:generate -w @gincana/api
 
-      # As migrations rodam nos dois sentidos: aplicar, zerar e aplicar de novo. É o que
-      # pega migration que não reverte antes de ela chegar em homologação.
-      - name: Migrations
+      # O banco do serviço nasce vazio a cada execução, então aplicar aqui já prova que
+      # as migrations recriam o schema do zero. O seed roda em seguida: se a carga de
+      # demonstração quebrar, descobrimos no pull request e não na Sprint Review.
+      - name: Migrations e seed
         working-directory: apps/api
         run: |
           npx prisma migrate deploy
-          npx prisma migrate reset --force --skip-seed
-          npx prisma migrate deploy
+          npx prisma db seed
 
       - run: npm run test -w @gincana/scoring
       - run: npm run test -w @gincana/api
