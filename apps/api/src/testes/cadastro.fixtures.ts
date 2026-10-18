@@ -160,8 +160,9 @@ export async function criarCenarioDeCadastro(): Promise<CenarioDeCadastro> {
   }
 
   /**
-   * A ordem importa: auditoria aponta para o autor, equipe aponta para o líder e o
-   * colaborador aponta para a equipe. Desmonta-se de fora para dentro.
+   * A ordem importa: auditoria aponta para o autor, regra de pontuação aponta para quem a
+   * criou, equipe aponta para o líder e o colaborador aponta para a equipe. Desmonta-se de
+   * fora para dentro.
    */
   async function limpar(): Promise<void> {
     const pessoas = await prisma.colaborador.findMany({
@@ -178,17 +179,36 @@ export async function criarCenarioDeCadastro(): Promise<CenarioDeCadastro> {
       select: { id: true },
     });
 
+    const tipos = await prisma.tipoAcao.findMany({
+      where: { gincanaId: { in: gincanaIds } },
+      select: { id: true },
+    });
+    const tipoIds = tipos.map((tipo) => tipo.id);
+    const regras = await prisma.regraPontuacao.findMany({
+      where: { tipoAcaoId: { in: tipoIds } },
+      select: { id: true },
+    });
+
     const pessoaIds = pessoas.map((pessoa) => pessoa.id);
     const equipeIds = equipes.map((equipe) => equipe.id);
+    const regraIds = regras.map((regra) => regra.id);
 
     await prisma.registroAuditoria.deleteMany({
       where: {
         OR: [
           { autorId: { in: pessoaIds } },
-          { entidadeId: { in: [...pessoaIds, ...equipeIds, ...gincanaIds] } },
+          {
+            entidadeId: {
+              in: [...pessoaIds, ...equipeIds, ...gincanaIds, ...tipoIds, ...regraIds],
+            },
+          },
         ],
       },
     });
+    // A regra aponta para quem a criou: sai antes do colaborador, senão a chave
+    // estrangeira segura a limpeza.
+    await prisma.regraPontuacao.deleteMany({ where: { id: { in: regraIds } } });
+    await prisma.tipoAcao.deleteMany({ where: { id: { in: tipoIds } } });
     await prisma.equipe.updateMany({ where: { id: { in: equipeIds } }, data: { liderId: null } });
     await prisma.colaborador.updateMany({
       where: { id: { in: pessoaIds } },

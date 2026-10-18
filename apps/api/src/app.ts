@@ -11,6 +11,7 @@ import { colaboradoresRouter } from './modules/colaboradores/routes.js';
 import { equipesRouter } from './modules/equipes/routes.js';
 import { gincanasRouter } from './modules/gincanas/routes.js';
 import { healthRouter } from './modules/health/routes.js';
+import { tiposAcaoRouter } from './modules/tipos-acao/routes.js';
 
 /**
  * Monta a aplicação sem abrir porta, para que os testes de integração subam o Express em
@@ -30,6 +31,7 @@ export function criarApp(): Express {
   app.use(gincanasRouter);
   app.use(equipesRouter);
   app.use(colaboradoresRouter);
+  app.use(tiposAcaoRouter);
 
   app.use(rotaNaoEncontrada);
   app.use(tratadorDeErros);
