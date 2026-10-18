@@ -9,8 +9,10 @@ import { rotaNaoEncontrada, tratadorDeErros } from './middlewares/erros.js';
 import { authRouter } from './modules/auth/routes.js';
 import { colaboradoresRouter } from './modules/colaboradores/routes.js';
 import { equipesRouter } from './modules/equipes/routes.js';
+import { evidenciasRouter } from './modules/evidencias/routes.js';
 import { gincanasRouter } from './modules/gincanas/routes.js';
 import { healthRouter } from './modules/health/routes.js';
+import { lancamentosRouter } from './modules/lancamentos/routes.js';
 import { tiposAcaoRouter } from './modules/tipos-acao/routes.js';
 
 /**
@@ -32,6 +34,8 @@ export function criarApp(): Express {
   app.use(equipesRouter);
   app.use(colaboradoresRouter);
   app.use(tiposAcaoRouter);
+  app.use(lancamentosRouter);
+  app.use(evidenciasRouter);
 
   app.use(rotaNaoEncontrada);
   app.use(tratadorDeErros);
