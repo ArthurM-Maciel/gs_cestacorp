@@ -6,6 +6,7 @@ import { pinoHttp } from 'pino-http';
 import { env } from './env.js';
 import { logger } from './logger.js';
 import { rotaNaoEncontrada, tratadorDeErros } from './middlewares/erros.js';
+import { authRouter } from './modules/auth/routes.js';
 import { healthRouter } from './modules/health/routes.js';
 
 /**
@@ -22,6 +23,7 @@ export function criarApp(): Express {
   app.use(pinoHttp({ logger }));
 
   app.use(healthRouter);
+  app.use(authRouter);
 
   app.use(rotaNaoEncontrada);
   app.use(tratadorDeErros);
