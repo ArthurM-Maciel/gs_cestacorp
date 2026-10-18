@@ -16,14 +16,18 @@ concurrency:
 env:
   NODE_VERSION: '22'
 
+# O runner é fixado em vez de usar ubuntu-latest: o rótulo migra para o Ubuntu 26 em
+# 19/10/2026, bem no meio das três sprints. Trocar de sistema operacional no pipeline é
+# assunto para depois de 19/11, não durante.
+
 jobs:
   guard:
     name: Convenções
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -96,37 +100,59 @@ jobs:
 
   changes:
     name: Áreas afetadas
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       api: ${{ steps.filtro.outputs.api }}
       web: ${{ steps.filtro.outputs.web }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filtro
+      - uses: actions/checkout@v5
         with:
-          # Em push na main nada é filtrado: a main roda a suíte inteira, como rede
-          # de segurança do trunk.
-          filters: |
-            api:
-              - 'apps/api/**'
-              - 'packages/**'
-              - 'package-lock.json'
-              - '.github/workflows/**'
-            web:
-              - 'apps/web/**'
-              - 'packages/**'
-              - 'package-lock.json'
-              - '.github/workflows/**'
+          fetch-depth: 0
+
+      # Feito com git em vez de uma action de terceiros: são poucas linhas, não traz
+      # dependência externa para dentro do pipeline e não depende de versão alheia.
+      # Em push na main nada é filtrado — a main roda a suíte inteira, como rede de
+      # segurança do trunk.
+      - id: filtro
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ -z "$BASE" ]; then
+            echo 'Push na main: roda tudo.'
+            echo 'api=true' >> "$GITHUB_OUTPUT"
+            echo 'web=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          arquivos=$(git diff --name-only "$BASE" HEAD)
+          echo "Arquivos alterados:"
+          echo "$arquivos" | sed 's/^/  /'
+
+          # packages/, o lockfile e o próprio pipeline afetam os dois lados.
+          if printf '%s' "$arquivos" | grep -Eq '^(apps/api/|packages/|package-lock\.json|\.github/workflows/)'; then
+            api=true
+          else
+            api=false
+          fi
+
+          if printf '%s' "$arquivos" | grep -Eq '^(apps/web/|packages/|package-lock\.json|\.github/workflows/)'; then
+            web=true
+          else
+            web=false
+          fi
+
+          echo "api=$api" >> "$GITHUB_OUTPUT"
+          echo "web=$web" >> "$GITHUB_OUTPUT"
+          echo "api=$api web=$web"
 
   qualidade:
     name: Lint, formatação e tipos
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -140,11 +166,11 @@ jobs:
     name: Testes do front
     needs: changes
     if: github.event_name == 'push' || needs.changes.outputs.web == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -156,7 +182,7 @@ jobs:
     name: Testes da API
     needs: changes
     if: github.event_name == 'push' || needs.changes.outputs.api == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     services:
       postgres:
@@ -177,8 +203,8 @@ jobs:
       # Valor de teste, sem relação com nenhum ambiente real.
       JWT_SECRET: segredo-de-integracao-continua-com-32-caracteres
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
