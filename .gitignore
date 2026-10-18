@@ -1,0 +1,39 @@
+# Dependências
+node_modules/
+.pnp/
+.pnp.js
+
+# Build
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# Ambiente — nunca versionar segredo
+.env
+.env.*
+!.env.example
+
+# Testes e cobertura
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Editores e sistema operacional
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Prisma
+apps/api/prisma/*.db
+apps/api/prisma/*.db-journal
+
+# Uploads locais de desenvolvimento
+uploads/
+tmp/
