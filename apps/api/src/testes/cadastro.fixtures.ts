@@ -4,6 +4,7 @@ import type { Papel, StatusGincana, Unidade } from '@gincana/contracts';
 import bcrypt from 'bcryptjs';
 
 import { prisma } from '../db.js';
+import { ehViolacaoDeUnicidade } from '../prisma-erros.js';
 import { assinarToken } from '../modules/auth/token.js';
 
 /**
@@ -167,19 +168,38 @@ export async function criarCenarioDeCadastro(): Promise<CenarioDeCadastro> {
       dataFim?: string;
     } = {},
   ): Promise<GincanaDeTeste> {
-    const ano = dados.ano ?? (await sortearAnoLivre());
-    const gincana = await prisma.gincana.create({
-      data: {
-        ano,
-        nome: dados.nome ?? `Gincana ${marca} ${ano}`,
-        dataInicio: new Date(`${dados.dataInicio ?? DATA_INICIO_PADRAO}T00:00:00.000Z`),
-        dataFim: new Date(`${dados.dataFim ?? DATA_FIM_PADRAO}T00:00:00.000Z`),
-        status: dados.status ?? 'PLANEJADA',
-      },
-    });
+    // Sortear um ano livre e depois criar é uma corrida: os arquivos de teste rodam em
+    // processos paralelos, e entre a consulta e a inserção outro cenário pode fincar o
+    // mesmo ano. Quando isso acontece, sorteamos de novo em vez de falhar — era a causa
+    // de falhas esporádicas que não se reproduziam ao rodar o arquivo sozinho.
+    const TENTATIVAS = 5;
 
-    gincanasCriadas.push(gincana.id);
-    return { id: gincana.id, ano: gincana.ano, nome: gincana.nome };
+    for (let tentativa = 1; ; tentativa += 1) {
+      const ano = dados.ano ?? (await sortearAnoLivre());
+
+      try {
+        const gincana = await prisma.gincana.create({
+          data: {
+            ano,
+            nome: dados.nome ?? `Gincana ${marca} ${ano}`,
+            dataInicio: new Date(`${dados.dataInicio ?? DATA_INICIO_PADRAO}T00:00:00.000Z`),
+            dataFim: new Date(`${dados.dataFim ?? DATA_FIM_PADRAO}T00:00:00.000Z`),
+            status: dados.status ?? 'PLANEJADA',
+          },
+        });
+
+        gincanasCriadas.push(gincana.id);
+        return { id: gincana.id, ano: gincana.ano, nome: gincana.nome };
+      } catch (erro) {
+        // Ano pedido explicitamente não é corrida: é o teste querendo o conflito.
+        const podeTentarDeNovo =
+          dados.ano === undefined && ehViolacaoDeUnicidade(erro) && tentativa < TENTATIVAS;
+
+        if (!podeTentarDeNovo) {
+          throw erro;
+        }
+      }
+    }
   }
 
   async function criarEquipe(gincanaId: string, nome?: string): Promise<EquipeDeTeste> {
