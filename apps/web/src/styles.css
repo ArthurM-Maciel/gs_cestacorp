@@ -1,0 +1,46 @@
+@import 'tailwindcss';
+
+/**
+ * Tokens da identidade do protótipo.
+ *
+ * Os valores são uma aproximação lida das telas: enquanto o acesso de editor ao arquivo
+ * do Figma não sai, não temos as variáveis originais. Ao receber o acesso, troque só
+ * este bloco — nenhum componente deve usar cor literal.
+ */
+@theme {
+  --color-marca-900: #1f4430;
+  --color-marca-800: #2a5a3d;
+  --color-marca-700: #356e4b;
+  --color-marca-600: #3f8257;
+  --color-marca-400: #7fc08f;
+  --color-marca-200: #c3e5cd;
+  --color-marca-50: #eef6f0;
+
+  --color-fundo: #f4f7f3;
+  --color-superficie: #ffffff;
+
+  --color-texto: #15241b;
+  --color-texto-suave: #5b6a60;
+
+  /* Estados de lançamento, iguais aos do protótipo */
+  --color-pendente: #f0a94c;
+  --color-pendente-fundo: #fdf3e3;
+  --color-aprovado: #3f8257;
+  --color-aprovado-fundo: #e7f3ea;
+  --color-recusado: #d6555a;
+  --color-recusado-fundo: #fbeaea;
+
+  /* Uma cor pastel por família de ação, como no protótipo */
+  --color-acao-alimentos: #fae0d0;
+  --color-acao-tampinhas: #d9efe0;
+  --color-acao-roupas: #dde5f8;
+  --color-acao-curso: #e6ddf8;
+
+  --radius-cartao: 1rem;
+}
+
+body {
+  background-color: var(--color-fundo);
+  color: var(--color-texto);
+  -webkit-font-smoothing: antialiased;
+}
