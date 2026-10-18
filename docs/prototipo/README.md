@@ -3,18 +3,46 @@
 Capturas do protótipo no Figma, feitas em 18/10/2026 a partir do modo de apresentação.
 Arquivo original: [Gincana Solidária · App](https://www.figma.com/design/kJkwMa5JEO3BqnKnNOqhjD/Gincana-Solid%C3%A1ria-%C2%B7-App).
 
-> As imagens são referência visual, não fonte de tokens. Enquanto o acesso de editor ao
-> arquivo não sair, cores e espaçamentos são reconstruídos por aproximação.
+> As imagens são referência visual. As cores em `apps/web/src/styles.css` foram extraídas
+> do arquivo original — o Figma não define variáveis de design, então os valores vieram da
+> amostragem das telas. Os espaçamentos continuam sendo aproximação.
+
+## Node-ids dos frames, para consulta no Figma
+
+| Tela                     | Celular | Computador |
+| ------------------------ | ------- | ---------- |
+| Boas-vindas              | `1:70`  | —          |
+| Login                    | `1:97`  | `21:690`   |
+| Cadastro                 | `1:134` | `21:726`   |
+| Início do colaborador    | `1:167` | `21:1062`  |
+| Escolher ação            | `1:227` | `21:1158`  |
+| Registrar ação           | `1:32`  | `21:1158`  |
+| Placar                   | `1:273` | `21:1219`  |
+| Aprovações do líder      | `1:343` | `21:1640`  |
+| Painel da administradora | —       | `21:1748`  |
+| Regras                   | `1:405` | `18:125`   |
+| Nova regra               | `1:463` | `18:352`   |
+| Equipes                  | —       | `21:1834`  |
 
 ## Identidade visual
 
-Verde escuro (`#2E5E3E` aprox.) como cor de marca, usado em fundos de destaque, botões
-primários e na barra lateral do desktop. Verde claro para acentos e estado positivo.
-Fundo neutro levemente esverdeado. Cantos bem arredondados, cartões brancos com sombra
-suave. Tipografia sem serifa, títulos grandes em duas linhas com a segunda em verde.
+| Uso                                  | Cor       |
+| ------------------------------------ | --------- |
+| Topo das telas e menu lateral        | `#1e3a2f` |
+| Botão primário e números em destaque | `#2f7d4f` |
+| Realce e pódio                       | `#a7e3b9` |
+| Fundo da aplicação                   | `#eef5f0` |
+| Texto                                | `#0d1b14` |
 
-Cada tipo de ação tem uma cor pastel própria e um ícone: alimentos (laranja), tampinhas
-(verde), roupas (azul), curso ou PDI (roxo).
+Cantos bem arredondados, cartões brancos com sombra suave, títulos grandes em duas linhas
+com a segunda em verde.
+
+Cada família de ação tem cor própria, para o colaborador reconhecer o tipo antes de ler:
+alimentos `#ffe7d6`, tampinhas `#ddf3f0`, roupas `#dcebff`, curso ou PDI `#ece4ff` e
+outra ação `#fff3c4`.
+
+Estados do lançamento: pendente `#8a5a00` sobre `#fdf1d6`, aprovado `#245f3c` sobre
+`#e3f3e8`, recusado `#b3261e` sobre `#fbeaea`.
 
 ## Telas por perfil
 
