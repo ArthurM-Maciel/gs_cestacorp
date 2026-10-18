@@ -1,11 +1,16 @@
 # Protótipo — Gincana Solidária
 
-Capturas do protótipo no Figma, feitas em 18/10/2026 a partir do modo de apresentação.
+Renderizações do protótipo no Figma, exportadas em 18/10/2026 direto do arquivo.
 Arquivo original: [Gincana Solidária · App](https://www.figma.com/design/kJkwMa5JEO3BqnKnNOqhjD/Gincana-Solid%C3%A1ria-%C2%B7-App).
 
-> As imagens são referência visual. As cores em `apps/web/src/styles.css` foram extraídas
-> do arquivo original — o Figma não define variáveis de design, então os valores vieram da
-> amostragem das telas. Os espaçamentos continuam sendo aproximação.
+> **Amostre a cor destas imagens, não de uma captura de tela.** Elas vêm renderizadas pelo
+> próprio Figma. Uma captura feita pelo navegador passa pelo perfil de cor do monitor e
+> dessatura tudo — chegamos a ler `#507c52` onde o arquivo tem `#2f7d4f`, e por pouco não
+> corrigimos o tema para o valor errado.
+>
+> As cores em `apps/web/src/styles.css` saíram daqui. O arquivo do Figma não define
+> variáveis de design, então o tema do Tailwind é a única fonte delas no projeto. Os
+> espaçamentos continuam sendo aproximação.
 
 ## Node-ids dos frames, para consulta no Figma
 
