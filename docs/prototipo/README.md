@@ -22,12 +22,14 @@ O protótipo cobre os três perfis em **mobile** e em **desktop**. A navegação
 barra inferior; a desktop é uma barra lateral escura.
 
 ### 01 · Acesso (`01-acesso-mobile.png`, `05-acesso-web.png`)
+
 Boas-vindas ("Faça o bem e some pontos!"), login e criação de conta. O login avisa
 "Acesso só para colaboradores — o login usa o seu e-mail corporativo". O cadastro pede
 nome, e-mail da Cestacorp, **seleção de equipe**, senha (mínimo 8 caracteres com um
 número) e um aceite explícito: "Aceito o uso dos meus dados na gincana (LGPD)".
 
 ### 02 · Colaborador (`02-colaborador-mobile.png`, `06-colaborador-web.png`)
+
 - **Início:** saudação, posição da equipe ("Sua equipe está em segundo lugar!"), cartão
   com o total de pontos e a distância para o líder, botão "+ Registrar ação" e a lista
   "Meus lançamentos" com status por cor — Pendente, Aprovado, Recusado. O recusado mostra
@@ -41,12 +43,14 @@ número) e um aceite explícito: "Aceito o uso dos meus dados na gincana (LGPD)"
   ranking completo com líder e número de ações.
 
 ### 03 · Líder da equipe (`03-lider-mobile.png`, `07-lider-web.png`)
+
 Fila de aprovações com contador ("Você tem 3 aprovações"), abas Pendentes / Aprovados /
 Recusados e, em cada item, ação, quantidade, colaborador, data e pontos, com os botões
 Recusar e Aprovar. No desktop vira tabela com a coluna "Ver comprovante" e a instrução
 "Abra o comprovante antes de aprovar. Cada decisão fica no histórico."
 
 ### 04 · Administradora (`04-administradora-mobile.png`, `08-administradora-web.png`)
+
 - **Painel (desktop):** cartões de equipes, lançamentos, aguardando aprovação e regras
   ativas, mais o ranking e a fila de pendentes.
 - **Regras de pontuação:** lista com ação, unidade, pontos por unidade, exigência de

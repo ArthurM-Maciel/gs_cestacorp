@@ -17,7 +17,12 @@ const envSchema = z.object({
   CORS_ORIGINS: z
     .string()
     .default('http://localhost:5173')
-    .transform((valor) => valor.split(',').map((origem) => origem.trim()).filter(Boolean)),
+    .transform((valor) =>
+      valor
+        .split(',')
+        .map((origem) => origem.trim())
+        .filter(Boolean),
+    ),
 });
 
 const resultado = envSchema.safeParse(process.env);

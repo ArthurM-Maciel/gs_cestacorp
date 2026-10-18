@@ -100,9 +100,7 @@ export function calcularPontosNaData(
   const regra = selecionarRegraVigente(regras, dataAcao);
 
   if (regra === null) {
-    throw new ErroDeCalculo(
-      'Nenhuma regra de pontuação vigente para esta ação na data informada.',
-    );
+    throw new ErroDeCalculo('Nenhuma regra de pontuação vigente para esta ação na data informada.');
   }
 
   return { pontos: calcularPontos(quantidade, regra.pontosPorUnidade), regra };

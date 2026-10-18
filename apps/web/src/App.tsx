@@ -12,8 +12,8 @@ export function App() {
         <span className="block text-marca-700">sem planilha</span>
       </h1>
       <p className="text-texto-suave max-w-prose">
-        Registre suas ações solidárias, envie o comprovante e acompanhe sua equipe. As telas
-        entram a partir da Sprint 1.
+        Registre suas ações solidárias, envie o comprovante e acompanhe sua equipe. As telas entram
+        a partir da Sprint 1.
       </p>
     </main>
   );

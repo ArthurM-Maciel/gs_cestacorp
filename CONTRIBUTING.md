@@ -30,11 +30,11 @@ esconde o que você realmente mudou.
 Tipos: `feat`, `fix`, `chore`, `docs`, `test`, `refactor`, `ci`, `spike`.
 Trabalho sem história (infraestrutura, pipeline, documentação do repo) usa `US00`.
 
-| Bom | Ruim | Por quê |
-|---|---|---|
-| `feat/US06-lancar-acao` | `feature/lancamento` | sem o tipo e sem a história |
-| `fix/US08-aprovar-equipe-errada` | `arthur` | branch com nome de pessoa não diz nada |
-| `ci/US00-pipeline-testes` | `teste` | não é um tipo válido |
+| Bom                              | Ruim                 | Por quê                                |
+| -------------------------------- | -------------------- | -------------------------------------- |
+| `feat/US06-lancar-acao`          | `feature/lancamento` | sem o tipo e sem a história            |
+| `fix/US08-aprovar-equipe-errada` | `arthur`             | branch com nome de pessoa não diz nada |
+| `ci/US00-pipeline-testes`        | `teste`              | não é um tipo válido                   |
 
 Um branch vive **no máximo dois dias úteis**. História grande vira dois branches
 (`feat/US07-parte1-upload`, `feat/US07-parte2-validacao`), não um branch que atravessa a
@@ -86,7 +86,7 @@ depois que alguém já começou a revisar.
 - `wip`, `ajustes`, `agora vai`, `.` — descrição que não diz o que mudou.
 - Nome de colega em tom de cobrança.
 
-O corpo do commit serve para o **porquê** e para a alternativa descartada. O *o quê* o
+O corpo do commit serve para o **porquê** e para a alternativa descartada. O _o quê_ o
 diff já mostra.
 
 ## Pull requests

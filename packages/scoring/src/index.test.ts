@@ -62,17 +62,20 @@ describe('US04 · selecionarRegraVigente', () => {
   const tampinhasAtual = regra('r2', 10, '2026-06-01');
 
   it('escolhe a regra que vigia na data da ação', () => {
-    expect(selecionarRegraVigente([tampinhasAntiga, tampinhasAtual], new Date('2026-03-10'))?.id)
-      .toBe('r1');
-    expect(selecionarRegraVigente([tampinhasAntiga, tampinhasAtual], new Date('2026-09-10'))?.id)
-      .toBe('r2');
+    expect(
+      selecionarRegraVigente([tampinhasAntiga, tampinhasAtual], new Date('2026-03-10'))?.id,
+    ).toBe('r1');
+    expect(
+      selecionarRegraVigente([tampinhasAntiga, tampinhasAtual], new Date('2026-09-10'))?.id,
+    ).toBe('r2');
   });
 
   it('trata a troca de regra sem buraco nem sobreposição', () => {
     // A vigência é fechada no início e aberta no fim: no instante exato da virada,
     // já vale a regra nova.
-    expect(selecionarRegraVigente([tampinhasAntiga, tampinhasAtual], new Date('2026-06-01'))?.id)
-      .toBe('r2');
+    expect(
+      selecionarRegraVigente([tampinhasAntiga, tampinhasAtual], new Date('2026-06-01'))?.id,
+    ).toBe('r2');
   });
 
   it('devolve nulo quando nenhuma regra cobre a data', () => {
@@ -82,8 +85,9 @@ describe('US04 · selecionarRegraVigente', () => {
 
   it('em cadastro inconsistente, vence a regra de início mais recente', () => {
     const sobreposta = regra('r3', 12, '2026-07-01');
-    expect(selecionarRegraVigente([tampinhasAtual, sobreposta], new Date('2026-08-01'))?.id)
-      .toBe('r3');
+    expect(selecionarRegraVigente([tampinhasAtual, sobreposta], new Date('2026-08-01'))?.id).toBe(
+      'r3',
+    );
   });
 
   it('recusa data inválida', () => {

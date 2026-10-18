@@ -9,10 +9,10 @@ Projeto da disciplina de Gerenciamento de Projetos, PUCRS, 2026. Cliente: Marier
 
 ## Perfis
 
-| Perfil | Pode |
-|---|---|
-| **Colaborador** | Registrar as próprias ações com comprovante, acompanhar o status delas e ver o placar |
-| **Líder de equipe** | Tudo do colaborador, mais aprovar ou recusar os lançamentos **da própria equipe** |
+| Perfil                       | Pode                                                                                                                                     |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Colaborador**              | Registrar as próprias ações com comprovante, acompanhar o status delas e ver o placar                                                    |
+| **Líder de equipe**          | Tudo do colaborador, mais aprovar ou recusar os lançamentos **da própria equipe**                                                        |
 | **Administradora** (Marieri) | Cadastrar gincana, equipes, colaboradores e regras de pontuação; aprovar lançamentos de qualquer equipe; consultar a trilha de auditoria |
 
 ## Stack
@@ -59,20 +59,20 @@ que a integração contínua executa.
 
 ## Time
 
-| Papel | Pessoa |
-|---|---|
-| Product Owner | Victor |
-| Architecture Owner | Marina |
-| Team Lead | Felipe |
-| Desenvolvedores | João, Brenda, Arthur, Antônio, Lucas |
-| Cliente | Marieri Gazen (Cestacorp) |
+| Papel              | Pessoa                               |
+| ------------------ | ------------------------------------ |
+| Product Owner      | Victor                               |
+| Architecture Owner | Marina                               |
+| Team Lead          | Felipe                               |
+| Desenvolvedores    | João, Brenda, Arthur, Antônio, Lucas |
+| Cliente            | Marieri Gazen (Cestacorp)            |
 
 ## Calendário
 
-| Sprint | Período | Entrega |
-|---|---|---|
-| S1 | 28/10 a 04/11 | Gincana, equipes, tipos de ação e cálculo automático de pontos |
-| S2 | 05/11 a 12/11 | Registro com comprovante, aprovação e placar por equipe |
-| S3 | 13/11 a 19/11 | Trilha de auditoria, ajustes finais e apresentação |
+| Sprint | Período       | Entrega                                                        |
+| ------ | ------------- | -------------------------------------------------------------- |
+| S1     | 28/10 a 04/11 | Gincana, equipes, tipos de ação e cálculo automático de pontos |
+| S2     | 05/11 a 12/11 | Registro com comprovante, aprovação e placar por equipe        |
+| S3     | 13/11 a 19/11 | Trilha de auditoria, ajustes finais e apresentação             |
 
 Sprint Review com a cliente ao final de cada sprint. Congelamento de código em 18/11.
