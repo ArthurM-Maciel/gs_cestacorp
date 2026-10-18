@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-import { botaoPrimario } from '../../components/estilos-de-botao.js';
+import { botaoPrimario } from '../../components/ui/estilos-de-botao.js';
 import { LayoutDeAcesso } from './LayoutDeAcesso.js';
 
 /**
