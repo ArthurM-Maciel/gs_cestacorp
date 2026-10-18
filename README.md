@@ -51,6 +51,25 @@ para rodar `npm test` no meio do trabalho sem perder nada.
 - [`docs/prototipo/`](docs/prototipo/) — telas do protótipo e inventário por perfil
 - [`docs/inception.md`](docs/) — escopo, backlog e riscos (em elaboração)
 
+## O que já está pronto
+
+| História                                                         | API    | Tela          |
+| ---------------------------------------------------------------- | ------ | ------------- |
+| US01 · Entrar com perfil de colaborador, líder ou administradora | pronta | pronta        |
+| US02 · Cadastrar a gincana do ano com o período                  | pronta | pronta        |
+| US03 · Cadastrar equipes e vincular colaboradores                | pronta | pronta        |
+| US04 · Tipos de ação com regra de pontos                         | pronta | —             |
+| US05 · Cálculo automático dos pontos                             | pronta | —             |
+| US06 · Lançar ação com quantidade                                | pronta | em construção |
+| US07 · Anexar comprovante                                        | pronta | em construção |
+| US08 · Aprovar ou recusar lançamentos da equipe                  | pronta | em construção |
+| US09 · Ver quem aprovou ou alterou cada lançamento               | pronta | —             |
+| US10 · Acompanhar o status dos próprios lançamentos              | pronta | em construção |
+| US11 · Ranking da equipe durante a gincana                       | pronta | —             |
+
+Fora do escopo de 19/11, conforme a inception: relatório exportável, perfil individual,
+biblioteca de evidências filtrável, gamificação e piloto.
+
 ## Ambientes
 
 - **Desenvolvimento:** máquina de cada integrante
