@@ -376,4 +376,61 @@ describe('US03 — cadastro de colaboradores', () => {
       expect(await auditoriasDe(pessoa.id)).toHaveLength(0);
     });
   });
+
+  describe('acesso de administradora', () => {
+    it('recusa a administradora desativando a própria conta', async () => {
+      const resposta = await request(app)
+        .patch(`/colaboradores/${administradora.id}`)
+        .set('Authorization', comoAdmin)
+        .send({ ativo: false });
+
+      expect(resposta.status).toBe(409);
+      expect(resposta.body.erro.codigo).toBe('NAO_PODE_REMOVER_PROPRIO_ACESSO');
+
+      const intacta = await prisma.colaborador.findUniqueOrThrow({
+        where: { id: administradora.id },
+      });
+      expect(intacta.ativo).toBe(true);
+    });
+
+    it('recusa a administradora abrindo mão do próprio papel', async () => {
+      const resposta = await request(app)
+        .patch(`/colaboradores/${administradora.id}`)
+        .set('Authorization', comoAdmin)
+        .send({ papel: 'COLABORADOR' });
+
+      expect(resposta.status).toBe(409);
+      expect(resposta.body.erro.codigo).toBe('NAO_PODE_REMOVER_PROPRIO_ACESSO');
+
+      const intacta = await prisma.colaborador.findUniqueOrThrow({
+        where: { id: administradora.id },
+      });
+      expect(intacta.papel).toBe('ADMIN');
+    });
+
+    it('permite desativar outra administradora, porque quem chama continua de pé', async () => {
+      const outra = await cenario.criarPessoa({ papel: 'ADMIN' });
+
+      const resposta = await request(app)
+        .patch(`/colaboradores/${outra.id}`)
+        .set('Authorization', comoAdmin)
+        .send({ ativo: false });
+
+      expect(resposta.status).toBe(200);
+
+      // Sempre sobra ao menos uma administradora ativa: a que fez a chamada.
+      const admins = await prisma.colaborador.count({ where: { papel: 'ADMIN', ativo: true } });
+      expect(admins).toBeGreaterThanOrEqual(1);
+    });
+
+    it('permite mudar o nome da própria administradora', async () => {
+      const resposta = await request(app)
+        .patch(`/colaboradores/${administradora.id}`)
+        .set('Authorization', comoAdmin)
+        .send({ nome: 'Marieri Gazen Silva' });
+
+      expect(resposta.status).toBe(200);
+      expect(resposta.body.nome).toBe('Marieri Gazen Silva');
+    });
+  });
 });
