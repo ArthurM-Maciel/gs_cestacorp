@@ -40,6 +40,10 @@ Requer Node 22 (veja `.nvmrc`; com nvm, `nvm use`) e Docker para o banco local.
 Antes de abrir um pull request, rode `npm run verify` — é o mesmo conjunto de verificações
 que a integração contínua executa.
 
+Os testes da API usam um banco separado, `gincana_test`, criado automaticamente antes de
+rodarem. O banco de desenvolvimento e sua carga de demonstração ficam intactos, então dá
+para rodar `npm test` no meio do trabalho sem perder nada.
+
 ## Documentação
 
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — fluxo de trabalho, convenções e Definition of Done.

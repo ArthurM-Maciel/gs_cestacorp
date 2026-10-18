@@ -128,6 +128,15 @@ Olhe sempre: a história faz o que promete; existe teste novo cobrindo o comport
 conferida no servidor para os três perfis; ninguém consegue ler ou editar dado de outra
 equipe; nenhum segredo entrou no diff.
 
+## Testes que tocam o banco
+
+Os testes da API rodam contra `gincana_test`, um banco separado do de desenvolvimento,
+criado e migrado automaticamente antes da suíte. Nunca aponte teste para o banco de
+desenvolvimento: a carga de demonstração é o que a cliente vê na Sprint Review.
+
+Cada teste cria os próprios dados e limpa o que criou. Não escreva teste que dependa do
+seed continuar igual — ele muda.
+
 ## Definition of Done
 
 Uma história só está pronta quando **todos** os itens valem:
