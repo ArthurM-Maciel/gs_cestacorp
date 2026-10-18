@@ -131,6 +131,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
+      - run: npm run db:generate -w @gincana/api
       - run: npm run lint
       - run: npm run format:check
       - run: npm run typecheck
@@ -182,5 +183,16 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
       - run: npm ci
+      - run: npm run db:generate -w @gincana/api
+
+      # As migrations rodam nos dois sentidos: aplicar, zerar e aplicar de novo. É o que
+      # pega migration que não reverte antes de ela chegar em homologação.
+      - name: Migrations
+        working-directory: apps/api
+        run: |
+          npx prisma migrate deploy
+          npx prisma migrate reset --force --skip-seed
+          npx prisma migrate deploy
+
       - run: npm run test -w @gincana/scoring
       - run: npm run test -w @gincana/api
