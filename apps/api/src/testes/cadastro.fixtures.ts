@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import type { Papel } from '@gincana/contracts';
+import type { Papel, StatusGincana, Unidade } from '@gincana/contracts';
 import bcrypt from 'bcryptjs';
 
 import { prisma } from '../db.js';
@@ -47,14 +47,54 @@ export interface EquipeDeTeste {
   gincanaId: string;
 }
 
+export interface TipoAcaoDeTeste {
+  id: string;
+  nome: string;
+  gincanaId: string;
+  unidade: Unidade;
+  exigeEvidencia: boolean;
+  /** A primeira regra de pontuação, criada junto. */
+  regraId: string;
+  pontosPorUnidade: number;
+}
+
+export interface OpcoesDeTipoAcao {
+  nome?: string;
+  unidade?: Unidade;
+  exigeEvidencia?: boolean;
+  pontosPorUnidade?: number;
+  ativo?: boolean;
+  /** Por padrão a regra passa a valer bem antes de hoje, para cobrir ação de dias atrás. */
+  vigenciaInicio?: Date;
+}
+
 export interface CenarioDeCadastro {
   /** Sufixo único deste cenário. Use nos nomes e e-mails criados pelo próprio teste. */
   marca: string;
   emailDeTeste: (prefixo: string) => string;
   anoLivre: () => Promise<number>;
-  criarGincana: (dados?: { ano?: number; nome?: string }) => Promise<GincanaDeTeste>;
+  criarGincana: (dados?: {
+    ano?: number;
+    nome?: string;
+    status?: StatusGincana;
+    dataInicio?: string;
+    dataFim?: string;
+  }) => Promise<GincanaDeTeste>;
   criarEquipe: (gincanaId: string, nome?: string) => Promise<EquipeDeTeste>;
   criarPessoa: (opcoes?: OpcoesDePessoa) => Promise<PessoaDeTeste>;
+  /** Tipo de ação já com a primeira regra de pontuação, como a US04 cria. */
+  criarTipoAcao: (
+    gincanaId: string,
+    criadoPorId: string,
+    opcoes?: OpcoesDeTipoAcao,
+  ) => Promise<TipoAcaoDeTeste>;
+  /** Fecha a regra vigente e abre outra, igual ao `POST /tipos-acao/:id/regras`. */
+  trocarPontuacao: (
+    tipoAcaoId: string,
+    pontosPorUnidade: number,
+    criadoPorId: string,
+    vigenciaInicio?: Date,
+  ) => Promise<string>;
   limpar: () => Promise<void>;
 }
 
@@ -71,6 +111,24 @@ const ANO_MAXIMO_DE_TESTE = 2099;
 /** Datas do período usadas por padrão. Qualquer ano serve: a coluna é só de calendário. */
 export const DATA_INICIO_PADRAO = '2099-03-01';
 export const DATA_FIM_PADRAO = '2099-11-30';
+
+/** O dia de hoje no mesmo formato do contrato (`AAAA-MM-DD`, sem hora e sem fuso). */
+export const hojeISO = (): string => new Date().toISOString().slice(0, 10);
+
+export const diasAtrasISO = (dias: number): string =>
+  new Date(Date.now() - dias * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+/**
+ * Período de uma gincana que inclui hoje.
+ *
+ * Os lançamentos (US06) só aceitam ação em dia passado e dentro do período da gincana, o
+ * que o período padrão de 2099 não permite. Uma janela de um ano para trás e um mês para
+ * a frente cobre qualquer execução da suíte sem depender do dia em que ela roda.
+ */
+export const PERIODO_QUE_INCLUI_HOJE = {
+  dataInicio: diasAtrasISO(365),
+  dataFim: diasAtrasISO(-30),
+};
 
 async function sortearAnoLivre(): Promise<number> {
   const ocupados = await prisma.gincana.findMany({
@@ -101,15 +159,22 @@ export async function criarCenarioDeCadastro(): Promise<CenarioDeCadastro> {
   const emailDeTeste = (prefixo: string) => `${prefixo}-${marca}@teste.invalido`;
 
   async function criarGincana(
-    dados: { ano?: number; nome?: string } = {},
+    dados: {
+      ano?: number;
+      nome?: string;
+      status?: StatusGincana;
+      dataInicio?: string;
+      dataFim?: string;
+    } = {},
   ): Promise<GincanaDeTeste> {
     const ano = dados.ano ?? (await sortearAnoLivre());
     const gincana = await prisma.gincana.create({
       data: {
         ano,
         nome: dados.nome ?? `Gincana ${marca} ${ano}`,
-        dataInicio: new Date(`${DATA_INICIO_PADRAO}T00:00:00.000Z`),
-        dataFim: new Date(`${DATA_FIM_PADRAO}T00:00:00.000Z`),
+        dataInicio: new Date(`${dados.dataInicio ?? DATA_INICIO_PADRAO}T00:00:00.000Z`),
+        dataFim: new Date(`${dados.dataFim ?? DATA_FIM_PADRAO}T00:00:00.000Z`),
+        status: dados.status ?? 'PLANEJADA',
       },
     });
 
@@ -160,6 +225,66 @@ export async function criarCenarioDeCadastro(): Promise<CenarioDeCadastro> {
   }
 
   /**
+   * Tipo de ação com a primeira regra, do mesmo jeito que a US04 grava: as duas coisas
+   * nascem juntas, porque tipo sem regra não pode ser lançado.
+   */
+  async function criarTipoAcao(
+    gincanaId: string,
+    criadoPorId: string,
+    opcoes: OpcoesDeTipoAcao = {},
+  ): Promise<TipoAcaoDeTeste> {
+    const pontosPorUnidade = opcoes.pontosPorUnidade ?? 10;
+    const tipo = await prisma.tipoAcao.create({
+      data: {
+        gincanaId,
+        nome: opcoes.nome ?? `Acao ${randomUUID().slice(0, 6)} ${marca}`,
+        unidade: opcoes.unidade ?? 'KG',
+        exigeEvidencia: opcoes.exigeEvidencia ?? false,
+        ativo: opcoes.ativo ?? true,
+      },
+    });
+
+    const regra = await prisma.regraPontuacao.create({
+      data: {
+        tipoAcaoId: tipo.id,
+        pontosPorUnidade,
+        // Bem antes de hoje, para que ação de dias atrás encontre regra vigente.
+        vigenciaInicio: opcoes.vigenciaInicio ?? new Date(Date.now() - 400 * 24 * 60 * 60 * 1000),
+        criadoPorId,
+      },
+    });
+
+    return {
+      id: tipo.id,
+      nome: tipo.nome,
+      gincanaId,
+      unidade: tipo.unidade,
+      exigeEvidencia: tipo.exigeEvidencia,
+      regraId: regra.id,
+      pontosPorUnidade,
+    };
+  }
+
+  /** Fecha a vigência atual e abre a próxima no mesmo instante, igual ao serviço da US04. */
+  async function trocarPontuacao(
+    tipoAcaoId: string,
+    pontosPorUnidade: number,
+    criadoPorId: string,
+    vigenciaInicio = new Date(),
+  ): Promise<string> {
+    await prisma.regraPontuacao.updateMany({
+      where: { tipoAcaoId, vigenciaFim: null },
+      data: { vigenciaFim: vigenciaInicio },
+    });
+
+    const nova = await prisma.regraPontuacao.create({
+      data: { tipoAcaoId, pontosPorUnidade, vigenciaInicio, criadoPorId },
+    });
+
+    return nova.id;
+  }
+
+  /**
    * A ordem importa: auditoria aponta para o autor, regra de pontuação aponta para quem a
    * criou, equipe aponta para o líder e o colaborador aponta para a equipe. Desmonta-se de
    * fora para dentro.
@@ -189,6 +314,12 @@ export async function criarCenarioDeCadastro(): Promise<CenarioDeCadastro> {
       select: { id: true },
     });
 
+    const lancamentos = await prisma.lancamento.findMany({
+      where: { gincanaId: { in: gincanaIds } },
+      select: { id: true },
+    });
+    const lancamentoIds = lancamentos.map((lancamento) => lancamento.id);
+
     const pessoaIds = pessoas.map((pessoa) => pessoa.id);
     const equipeIds = equipes.map((equipe) => equipe.id);
     const regraIds = regras.map((regra) => regra.id);
@@ -199,12 +330,23 @@ export async function criarCenarioDeCadastro(): Promise<CenarioDeCadastro> {
           { autorId: { in: pessoaIds } },
           {
             entidadeId: {
-              in: [...pessoaIds, ...equipeIds, ...gincanaIds, ...tipoIds, ...regraIds],
+              in: [
+                ...pessoaIds,
+                ...equipeIds,
+                ...gincanaIds,
+                ...tipoIds,
+                ...regraIds,
+                ...lancamentoIds,
+              ],
             },
           },
         ],
       },
     });
+    // O lançamento aponta para a regra, para o tipo, para a equipe e para o colaborador:
+    // é o primeiro a sair. As evidências caem junto, por cascata declarada no schema.
+    await prisma.evidencia.deleteMany({ where: { lancamentoId: { in: lancamentoIds } } });
+    await prisma.lancamento.deleteMany({ where: { id: { in: lancamentoIds } } });
     // A regra aponta para quem a criou: sai antes do colaborador, senão a chave
     // estrangeira segura a limpeza.
     await prisma.regraPontuacao.deleteMany({ where: { id: { in: regraIds } } });
@@ -226,6 +368,8 @@ export async function criarCenarioDeCadastro(): Promise<CenarioDeCadastro> {
     criarGincana,
     criarEquipe,
     criarPessoa,
+    criarTipoAcao,
+    trocarPontuacao,
     limpar,
   };
 }
