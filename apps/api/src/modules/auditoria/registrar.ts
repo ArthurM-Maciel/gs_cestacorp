@@ -1,11 +1,15 @@
+import type { AcaoAuditada, EntidadeAuditada } from '@gincana/contracts';
+
 import type { Prisma } from '../../../generated/prisma/client.js';
 
 import type { Transacao } from '../../db.js';
 
-export type AcaoAuditada = 'CRIACAO' | 'APROVACAO' | 'RECUSA' | 'ALTERACAO' | 'EXCLUSAO';
+// Os nomes de ação e de entidade vêm do contrato: é o mesmo vocabulário que a leitura da
+// US09 filtra e que o front exibe, e ele não pode ser declarado duas vezes.
+export type { AcaoAuditada } from '@gincana/contracts';
 
 export interface EntradaDeAuditoria {
-  entidade: 'Lancamento' | 'RegraPontuacao' | 'TipoAcao' | 'Colaborador' | 'Equipe' | 'Gincana';
+  entidade: EntidadeAuditada;
   entidadeId: string;
   acao: AcaoAuditada;
   autorId: string;
