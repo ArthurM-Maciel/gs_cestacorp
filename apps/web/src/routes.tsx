@@ -6,7 +6,12 @@ import { ErroInesperado, PaginaNaoEncontrada } from './components/TelasDeErroDeR
 import { BoasVindas } from './features/acesso/BoasVindas.js';
 import { CriarContaEmBreve } from './features/acesso/CriarContaEmBreve.js';
 import { TelaDeLogin } from './features/acesso/TelaDeLogin.js';
+import { LayoutDaAdministradora } from './features/administracao/LayoutDaAdministradora.js';
+import { TelaDeColaboradores } from './features/colaboradores/TelaDeColaboradores.js';
+import { TelaDeEquipes } from './features/equipes/TelaDeEquipes.js';
+import { TelaDeGincanas } from './features/gincanas/TelaDeGincanas.js';
 import { EsqueletoDoPerfil } from './features/inicio/EsqueletoDoPerfil.js';
+import { PainelEmBreve } from './features/painel/PainelEmBreve.js';
 
 /**
  * Mapa de rotas. Cada história acrescenta as suas aqui, em poucas linhas, dentro do grupo
@@ -54,10 +59,14 @@ export const rotas: RouteObject[] = [
         element: <RotaProtegida papeis={['ADMIN']} />,
         children: [
           {
-            path: '/painel',
-            element: (
-              <EsqueletoDoPerfil descricao="Em breve, aqui ficam o painel da gincana, as equipes e as regras." />
-            ),
+            // Menu e topo da administradora; cada história acrescenta a sua tela aqui.
+            element: <LayoutDaAdministradora />,
+            children: [
+              { path: '/painel', element: <PainelEmBreve /> },
+              { path: '/gincanas', element: <TelaDeGincanas /> },
+              { path: '/equipes', element: <TelaDeEquipes /> },
+              { path: '/colaboradores', element: <TelaDeColaboradores /> },
+            ],
           },
         ],
       },
