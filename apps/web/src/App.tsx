@@ -1,20 +1,20 @@
+import { RouterProvider } from 'react-router-dom';
+
+import type { criarRoteador } from './routes.js';
+import { SessaoProvider } from './lib/sessao.js';
+
+interface Props {
+  roteador: ReturnType<typeof criarRoteador>;
+}
+
 /**
- * Esqueleto da aplicação. As telas chegam a partir da Sprint 1, em
- * `src/features/<recurso>/` — uma pasta por história, para que cinco pessoas trabalhem
- * em paralelo sem disputar arquivo.
+ * Raiz da aplicação. O roteador chega de fora para que o teste use um roteador em
+ * memória, com as mesmas rotas, sem tocar no histórico do navegador.
  */
-export function App() {
+export function App({ roteador }: Props) {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center gap-4 px-4 py-12">
-      <p className="text-sm font-medium tracking-wide text-marca-600 uppercase">Cestacorp</p>
-      <h1 className="text-4xl font-bold text-balance">
-        Gincana Solidária
-        <span className="block text-marca-600">sem planilha</span>
-      </h1>
-      <p className="text-texto-suave max-w-prose">
-        Registre suas ações solidárias, envie o comprovante e acompanhe sua equipe. As telas entram
-        a partir da Sprint 1.
-      </p>
-    </main>
+    <SessaoProvider>
+      <RouterProvider router={roteador} />
+    </SessaoProvider>
   );
 }
