@@ -6,6 +6,7 @@ import { pinoHttp } from 'pino-http';
 import { env } from './env.js';
 import { logger } from './logger.js';
 import { rotaNaoEncontrada, tratadorDeErros } from './middlewares/erros.js';
+import { auditoriaRouter } from './modules/auditoria/routes.js';
 import { authRouter } from './modules/auth/routes.js';
 import { colaboradoresRouter } from './modules/colaboradores/routes.js';
 import { equipesRouter } from './modules/equipes/routes.js';
@@ -13,6 +14,7 @@ import { evidenciasRouter } from './modules/evidencias/routes.js';
 import { gincanasRouter } from './modules/gincanas/routes.js';
 import { healthRouter } from './modules/health/routes.js';
 import { lancamentosRouter } from './modules/lancamentos/routes.js';
+import { rankingRouter } from './modules/ranking/routes.js';
 import { tiposAcaoRouter } from './modules/tipos-acao/routes.js';
 
 /**
@@ -36,6 +38,8 @@ export function criarApp(): Express {
   app.use(tiposAcaoRouter);
   app.use(lancamentosRouter);
   app.use(evidenciasRouter);
+  app.use(auditoriaRouter);
+  app.use(rankingRouter);
 
   app.use(rotaNaoEncontrada);
   app.use(tratadorDeErros);
