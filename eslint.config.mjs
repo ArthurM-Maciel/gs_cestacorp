@@ -29,6 +29,22 @@ export default tseslint.config(
     },
   },
   {
+    // Scripts de apoio rodam direto no Node. Em TypeScript o compilador já conhece
+    // estes globais, mas em .mjs o no-undef precisa que digamos quais existem.
+    files: ['**/*.mjs', '**/*.js'],
+    languageOptions: {
+      globals: {
+        console: 'readonly',
+        process: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        fetch: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+      },
+    },
+  },
+  {
     files: ['apps/web/**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
     rules: reactHooks.configs.recommended.rules,
