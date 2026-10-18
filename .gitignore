@@ -37,3 +37,6 @@ apps/api/prisma/*.db-journal
 # Uploads locais de desenvolvimento
 uploads/
 tmp/
+
+# Configuração pessoal do Claude Code, fora do versionamento
+.claude/settings.local.json
