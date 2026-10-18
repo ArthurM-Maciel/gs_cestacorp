@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build -w @gincana/web",
+  "outputDirectory": "apps/web/dist",
+  "installCommand": "npm ci",
+  "framework": "vite",
+  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
+}
