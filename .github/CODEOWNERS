@@ -1,0 +1,26 @@
+# Donos de código — quem o GitHub sugere como revisor de cada área.
+#
+# Substitua os nomes pelos usuários reais do GitHub (@usuario) antes de usar.
+# Sem um ruleset exigindo revisão dos donos, este arquivo apenas sugere o revisor —
+# mas já responde à pergunta "quem revisa isso?" no dia a dia, e isso não custa nada.
+
+# Padrão: Team Lead e Architecture Owner
+*                           @felipe @marina
+
+# API e domínio
+/apps/api/                  @marina @joao @antonio
+
+# Schema e migrations: dono único, por ser o ponto de maior risco do projeto
+/apps/api/prisma/           @marina
+
+# Front
+/apps/web/                  @brenda @lucas
+
+# Contrato compartilhado: quebra os dois lados de uma vez
+/packages/contracts/        @marina
+/packages/scoring/          @marina
+
+# Infraestrutura e regras do repositório
+/.github/                   @felipe @ArthurM-Maciel
+/.claude/                   @felipe @ArthurM-Maciel
+/CONTRIBUTING.md            @felipe @ArthurM-Maciel
