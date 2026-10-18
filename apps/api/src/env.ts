@@ -1,5 +1,12 @@
-import 'dotenv/config';
+import { fileURLToPath } from 'node:url';
+
+import dotenv from 'dotenv';
 import { z } from 'zod';
+
+// O .env vive na raiz do monorepo; a API roda a partir de apps/api. Em produção o
+// arquivo não existe e as variáveis vêm do próprio ambiente — dotenv simplesmente
+// ignora o caminho ausente.
+dotenv.config({ path: fileURLToPath(new URL('../../../.env', import.meta.url)), quiet: true });
 
 /**
  * Configuração do processo, validada na partida.

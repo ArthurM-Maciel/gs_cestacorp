@@ -1,5 +1,10 @@
-import 'dotenv/config';
+import { fileURLToPath } from 'node:url';
+
+import dotenv from 'dotenv';
 import { defineConfig } from 'prisma/config';
+
+// O .env vive na raiz do monorepo, e os comandos do Prisma rodam a partir de apps/api.
+dotenv.config({ path: fileURLToPath(new URL('../../.env', import.meta.url)), quiet: true });
 
 /**
  * Configuração do Prisma.
