@@ -11,7 +11,9 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset --force && prisma db seed",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "db:test:prepare": "node scripts/preparar-banco-de-teste.mjs",
+    "pretest": "node scripts/preparar-banco-de-teste.mjs"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
