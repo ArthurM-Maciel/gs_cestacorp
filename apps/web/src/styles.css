@@ -43,6 +43,13 @@
   --color-acao-curso: #ece4ff;
   --color-acao-outra: #fff3c4;
 
+  /* Cor do desenho (ícone) de cada família, escura o bastante para ler sobre o fundo dela */
+  --color-acao-alimentos-tinta: #b4501a;
+  --color-acao-tampinhas-tinta: #1b7a6e;
+  --color-acao-roupas-tinta: #2b5fb4;
+  --color-acao-curso-tinta: #6a42c2;
+  --color-acao-outra-tinta: #7a5a00;
+
   --radius-cartao: 1rem;
 }
 
