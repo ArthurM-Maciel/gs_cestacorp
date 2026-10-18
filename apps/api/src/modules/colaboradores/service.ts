@@ -147,6 +147,22 @@ export async function atualizarColaborador(
       }
     }
 
+    // A administradora não pode se trancar para fora: desativar a própria conta ou abrir
+    // mão do próprio papel derruba a sessão na requisição seguinte, e recuperar o acesso
+    // exigiria SQL na mão no meio da gincana.
+    //
+    // Esta regra sozinha garante que sempre sobre ao menos uma administradora ativa.
+    // Quem chama esta rota é sempre uma administradora ativa — o middleware recarrega o
+    // colaborador do banco a cada requisição — então desativar outra pessoa nunca zera a
+    // conta: quem fez a chamada continua de pé.
+    if (atual.papel === 'ADMIN' && id === autorId && (!ativo || papel !== 'ADMIN')) {
+      throw conflito(
+        'NAO_PODE_REMOVER_PROPRIO_ACESSO',
+        'Você não pode desativar a própria conta nem abrir mão do próprio papel de ' +
+          'administradora. Peça a outra administradora para fazer isso.',
+      );
+    }
+
     if (mudaEquipe && novaEquipeId) {
       if (!ativo) {
         throw conflito(
