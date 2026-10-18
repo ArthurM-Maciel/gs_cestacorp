@@ -107,22 +107,44 @@ jobs:
       web: ${{ steps.filtro.outputs.web }}
     steps:
       - uses: actions/checkout@v5
-      - uses: dorny/paths-filter@v3
-        id: filtro
         with:
-          # Em push na main nada é filtrado: a main roda a suíte inteira, como rede
-          # de segurança do trunk.
-          filters: |
-            api:
-              - 'apps/api/**'
-              - 'packages/**'
-              - 'package-lock.json'
-              - '.github/workflows/**'
-            web:
-              - 'apps/web/**'
-              - 'packages/**'
-              - 'package-lock.json'
-              - '.github/workflows/**'
+          fetch-depth: 0
+
+      # Feito com git em vez de uma action de terceiros: são poucas linhas, não traz
+      # dependência externa para dentro do pipeline e não depende de versão alheia.
+      # Em push na main nada é filtrado — a main roda a suíte inteira, como rede de
+      # segurança do trunk.
+      - id: filtro
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ -z "$BASE" ]; then
+            echo 'Push na main: roda tudo.'
+            echo 'api=true' >> "$GITHUB_OUTPUT"
+            echo 'web=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          arquivos=$(git diff --name-only "$BASE" HEAD)
+          echo "Arquivos alterados:"
+          echo "$arquivos" | sed 's/^/  /'
+
+          # packages/, o lockfile e o próprio pipeline afetam os dois lados.
+          if printf '%s' "$arquivos" | grep -Eq '^(apps/api/|packages/|package-lock\.json|\.github/workflows/)'; then
+            api=true
+          else
+            api=false
+          fi
+
+          if printf '%s' "$arquivos" | grep -Eq '^(apps/web/|packages/|package-lock\.json|\.github/workflows/)'; then
+            web=true
+          else
+            web=false
+          fi
+
+          echo "api=$api" >> "$GITHUB_OUTPUT"
+          echo "web=$web" >> "$GITHUB_OUTPUT"
+          echo "api=$api web=$web"
 
   qualidade:
     name: Lint, formatação e tipos
