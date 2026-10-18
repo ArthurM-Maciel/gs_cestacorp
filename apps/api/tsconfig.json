@@ -5,5 +5,6 @@
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "prisma/**/*.ts", "prisma.config.ts"],
+  "exclude": ["generated/**"]
 }

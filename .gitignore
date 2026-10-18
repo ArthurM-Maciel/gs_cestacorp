@@ -40,3 +40,6 @@ tmp/
 
 # Configuração pessoal do Claude Code, fora do versionamento
 .claude/settings.local.json
+
+# Cliente do Prisma, gerado a partir do schema
+apps/api/generated/
