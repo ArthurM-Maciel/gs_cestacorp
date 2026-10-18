@@ -116,6 +116,16 @@ export async function registrarEvidencia(
     const lancamento = await carregarLancamento(tx, lancamentoId);
     conferirMexidaNasEvidencias(usuario, lancamento);
 
+    // O endereço precisa ser do armazenamento que nós assinamos. Sem isso, qualquer
+    // pessoa autenticada registraria um link para um site próprio e o líder clicaria
+    // nele achando que é o comprovante.
+    if (!storage.aceitaUrl(dados.url)) {
+      throw conflito(
+        'ENDERECO_DE_ARQUIVO_INVALIDO',
+        'O comprovante precisa ter sido enviado pelo próprio sistema. Envie o arquivo de novo.',
+      );
+    }
+
     const quantas = await tx.evidencia.count({ where: { lancamentoId } });
     if (quantas >= MAXIMO_DE_EVIDENCIAS) {
       throw conflito(

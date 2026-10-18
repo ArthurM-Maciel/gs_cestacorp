@@ -378,4 +378,43 @@ describe('US07 — comprovantes do lançamento', () => {
       expect(resposta.body.pontosCalculados).toBe(10);
     });
   });
+  describe('endereço do comprovante', () => {
+    // O líder abre este endereço num link para conferir o comprovante antes de aprovar.
+    // Um esquema executável aqui vira código rodando no navegador dele, e um endereço
+    // de fora vira uma página qualquer passando por comprovante.
+    const perigosos = [
+      'javascript:alert(document.cookie)',
+      'data:text/html,<script>alert(1)</script>',
+      'JaVaScRiPt:alert(1)',
+    ];
+
+    it.each(perigosos)('recusa o endereço %s', async (url) => {
+      const criado = await lancar(comoAna);
+
+      const resposta = await request(app)
+        .post(`/lancamentos/${criado.id}/evidencias`)
+        .set('Authorization', comoAna)
+        .send({ ...arquivo('qualquer'), url });
+
+      expect(resposta.status).toBe(400);
+
+      const guardadas = await prisma.evidencia.count({ where: { lancamentoId: criado.id } });
+      expect(guardadas).toBe(0);
+    });
+
+    it('recusa endereço que não é do armazenamento do sistema', async () => {
+      const criado = await lancar(comoAna);
+
+      const resposta = await request(app)
+        .post(`/lancamentos/${criado.id}/evidencias`)
+        .set('Authorization', comoAna)
+        .send({ ...arquivo('qualquer'), url: 'https://site-de-fora.invalido/comprovante.png' });
+
+      expect(resposta.status).toBe(409);
+      expect(resposta.body.erro.codigo).toBe('ENDERECO_DE_ARQUIVO_INVALIDO');
+
+      const guardadas = await prisma.evidencia.count({ where: { lancamentoId: criado.id } });
+      expect(guardadas).toBe(0);
+    });
+  });
 });
