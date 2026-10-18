@@ -3,6 +3,8 @@ name: CI
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
+  push:
+    branches: [main]
 
 permissions:
   contents: read
@@ -11,9 +13,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  NODE_VERSION: '22'
+
 jobs:
   guard:
     name: Convenções
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -87,3 +93,94 @@ jobs:
             echo "::warning::$linhas linhas úteis, acima do limite de 400 combinado no CONTRIBUTING."
             echo "Explique no PR por que não dá para quebrar em dois."
           fi
+
+  changes:
+    name: Áreas afetadas
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      api: ${{ steps.filtro.outputs.api }}
+      web: ${{ steps.filtro.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filtro
+        with:
+          # Em push na main nada é filtrado: a main roda a suíte inteira, como rede
+          # de segurança do trunk.
+          filters: |
+            api:
+              - 'apps/api/**'
+              - 'packages/**'
+              - 'package-lock.json'
+              - '.github/workflows/**'
+            web:
+              - 'apps/web/**'
+              - 'packages/**'
+              - 'package-lock.json'
+              - '.github/workflows/**'
+
+  qualidade:
+    name: Lint, formatação e tipos
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run typecheck
+
+  teste-web:
+    name: Testes do front
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run test -w @gincana/web
+      - run: npm run build -w @gincana/web
+
+  teste-api:
+    name: Testes da API
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: gincana
+          POSTGRES_PASSWORD: gincana
+          POSTGRES_DB: gincana_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gincana -d gincana_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://gincana:gincana@localhost:5432/gincana_test
+      # Valor de teste, sem relação com nenhum ambiente real.
+      JWT_SECRET: segredo-de-integracao-continua-com-32-caracteres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run test -w @gincana/scoring
+      - run: npm run test -w @gincana/api
