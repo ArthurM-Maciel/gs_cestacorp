@@ -191,7 +191,11 @@ async function definirLider(
   await comUnicidade(
     () => tx.equipe.update({ where: { id: equipe.id }, data: { liderId: pessoa.id } }),
     () =>
-      conflito('JA_LIDERA_OUTRA_EQUIPE', `${pessoa.nome} já lidera outra equipe desta gincana.`),
+      conflito(
+        'JA_LIDERA_OUTRA_EQUIPE',
+        `${pessoa.nome} já lidera outra equipe. Troque o líder de lá antes de trazer ` +
+          'esta pessoa.',
+      ),
   );
   await registrarAuditoria(tx, {
     entidade: 'Equipe',
@@ -286,7 +290,7 @@ export async function atualizarEquipe(
   autorId: string,
 ): Promise<Equipe> {
   return prisma.$transaction(async (tx) => {
-    const equipe = await exigirEquipe(tx, id);
+    let equipe = await exigirEquipe(tx, id);
     const novoNome = dados.nome;
 
     if (novoNome && novoNome !== equipe.nome) {
@@ -294,6 +298,10 @@ export async function atualizarEquipe(
         () => tx.equipe.update({ where: { id }, data: { nome: novoNome } }),
         () => nomeDuplicado(novoNome),
       );
+      // Recarrega antes de mexer na liderança: a auditoria é o artefato do selo de
+      // qualidade e não pode descrever a troca usando o nome que a equipe acabou de
+      // deixar de ter.
+      equipe = await exigirEquipe(tx, id);
     }
 
     // `liderId` ausente não mexe em quem lidera; `liderId: null` tira o líder atual.
