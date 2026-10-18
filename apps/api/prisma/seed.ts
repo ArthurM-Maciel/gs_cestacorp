@@ -119,7 +119,10 @@ async function main(): Promise<void> {
     },
   ];
 
-  const regraVigenteDe = new Map<string, { tipoId: string; regraId: string; pontos: number }>();
+  const regrasDe = new Map<
+    string,
+    { tipoId: string; regras: { id: string; pontos: number; inicio: Date; fim: Date | null }[] }
+  >();
 
   for (const tipo of tipos) {
     const tipoAcao = await prisma.tipoAcao.upsert({
@@ -164,22 +167,42 @@ async function main(): Promise<void> {
       });
     }
 
-    const vigente = await prisma.regraPontuacao.findFirst({
-      where: { tipoAcaoId: tipoAcao.id, vigenciaFim: null },
+    const regras = await prisma.regraPontuacao.findMany({
+      where: { tipoAcaoId: tipoAcao.id },
+      orderBy: { vigenciaInicio: 'asc' },
     });
 
-    if (vigente !== null) {
-      regraVigenteDe.set(tipo.nome, {
-        tipoId: tipoAcao.id,
-        regraId: vigente.id,
-        pontos: Number(vigente.pontosPorUnidade),
-      });
-    }
+    regrasDe.set(tipo.nome, {
+      tipoId: tipoAcao.id,
+      regras: regras.map((r) => ({
+        id: r.id,
+        pontos: Number(r.pontosPorUnidade),
+        inicio: r.vigenciaInicio,
+        fim: r.vigenciaFim,
+      })),
+    });
   }
 
   // Lançamentos da demonstração: uma fila de pendentes para o líder aprovar ao vivo,
   // aprovados que alimentam o placar e um recusado com motivo visível.
-  const lancamentos = [
+  const lancamentos: {
+    pessoa: string;
+    tipo: string;
+    qtd: number;
+    status: 'PENDENTE' | 'APROVADO' | 'RECUSADO';
+    motivo?: string;
+    dataAcao?: string;
+  }[] = [
+    // Lançamento feito quando tampinhas ainda valia 8 pontos por quilo. Ele continua
+    // valendo 8 mesmo depois de a regra virar 10: é a prova visível, na Sprint Review,
+    // de que mudar a pontuação não mexe no que já foi apurado.
+    {
+      pessoa: 'Helena Dias',
+      tipo: 'Doação de tampinhas',
+      qtd: 10,
+      status: 'APROVADO' as const,
+      dataAcao: '2026-04-20',
+    },
     { pessoa: 'Camila Rocha', tipo: 'Doação de alimentos', qtd: 12, status: 'PENDENTE' as const },
     { pessoa: 'Diego Martins', tipo: 'Doação de tampinhas', qtd: 3, status: 'PENDENTE' as const },
     { pessoa: 'Paula Nunes', tipo: 'Doação de roupas', qtd: 8, status: 'PENDENTE' as const },
@@ -202,9 +225,16 @@ async function main(): Promise<void> {
   if (jaTemLancamento === null) {
     for (const item of lancamentos) {
       const colaboradorId = pessoas.get(item.pessoa);
-      const regra = regraVigenteDe.get(item.tipo);
+      const tipo = regrasDe.get(item.tipo);
+      const dataAcao = data(item.dataAcao ?? '2026-09-15');
 
-      if (colaboradorId === undefined || regra === undefined) {
+      // Mesma seleção que a API faz: vale a regra vigente na data em que a ação
+      // aconteceu, não a de hoje.
+      const regra = tipo?.regras.find(
+        (r) => r.inicio <= dataAcao && (r.fim === null || dataAcao < r.fim),
+      );
+
+      if (colaboradorId === undefined || tipo === undefined || regra === undefined) {
         continue;
       }
 
@@ -225,14 +255,14 @@ async function main(): Promise<void> {
           gincanaId: gincana.id,
           colaboradorId,
           equipeId: colaborador.equipe.id,
-          tipoAcaoId: regra.tipoId,
+          tipoAcaoId: tipo.tipoId,
           quantidade: item.qtd,
-          regraPontuacaoId: regra.regraId,
+          regraPontuacaoId: regra.id,
           pontosPorUnidadeAplicado: regra.pontos,
           pontosCalculados: Math.round(item.qtd * regra.pontos),
           status: item.status,
-          dataAcao: data('2026-09-15'),
-          motivoRecusa: 'motivo' in item ? item.motivo : null,
+          dataAcao,
+          motivoRecusa: item.motivo ?? null,
           avaliadoPorId: avaliadorId,
           avaliadoEm: avaliadorId === null ? null : data('2026-09-16'),
         },
@@ -250,7 +280,7 @@ async function main(): Promise<void> {
             status: 'PENDENTE',
           },
           descricao: `Registrou ${item.qtd} de ${item.tipo}`,
-          criadoEm: data('2026-09-15'),
+          criadoEm: dataAcao,
         },
       });
 
@@ -266,7 +296,7 @@ async function main(): Promise<void> {
             descricao:
               item.status === 'APROVADO'
                 ? 'Aprovou o lançamento'
-                : `Recusou o lançamento: ${'motivo' in item ? item.motivo : ''}`,
+                : `Recusou o lançamento: ${item.motivo ?? ''}`,
             criadoEm: data('2026-09-16'),
           },
         });
