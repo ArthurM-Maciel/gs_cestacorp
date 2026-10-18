@@ -16,14 +16,18 @@ concurrency:
 env:
   NODE_VERSION: '22'
 
+# O runner é fixado em vez de usar ubuntu-latest: o rótulo migra para o Ubuntu 26 em
+# 19/10/2026, bem no meio das três sprints. Trocar de sistema operacional no pipeline é
+# assunto para depois de 19/11, não durante.
+
 jobs:
   guard:
     name: Convenções
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -96,13 +100,13 @@ jobs:
 
   changes:
     name: Áreas afetadas
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       api: ${{ steps.filtro.outputs.api }}
       web: ${{ steps.filtro.outputs.web }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dorny/paths-filter@v3
         id: filtro
         with:
@@ -122,11 +126,11 @@ jobs:
 
   qualidade:
     name: Lint, formatação e tipos
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -140,11 +144,11 @@ jobs:
     name: Testes do front
     needs: changes
     if: github.event_name == 'push' || needs.changes.outputs.web == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -156,7 +160,7 @@ jobs:
     name: Testes da API
     needs: changes
     if: github.event_name == 'push' || needs.changes.outputs.api == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     services:
       postgres:
@@ -177,8 +181,8 @@ jobs:
       # Valor de teste, sem relação com nenhum ambiente real.
       JWT_SECRET: segredo-de-integracao-continua-com-32-caracteres
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
