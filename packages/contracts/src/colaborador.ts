@@ -33,3 +33,15 @@ export const colaboradorSchema = z.object({
   equipe: z.object({ id: idSchema, nome: z.string() }).nullable(),
 });
 export type Colaborador = z.infer<typeof colaboradorSchema>;
+
+/**
+ * Filtros da listagem usada pela administradora ao montar as equipes.
+ *
+ * Vem da barra de endereço, então tudo é opcional: sem filtro, a lista é a de todos os
+ * colaboradores cadastrados.
+ */
+export const listarColaboradoresQuerySchema = z.object({
+  equipeId: idSchema.optional(),
+  papel: papelSchema.optional(),
+});
+export type ListarColaboradoresQuery = z.infer<typeof listarColaboradoresQuerySchema>;
