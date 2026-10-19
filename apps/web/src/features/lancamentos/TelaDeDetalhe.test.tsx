@@ -166,8 +166,24 @@ describe('Detalhe do lançamento e histórico (US09)', () => {
       expect(dados).toHaveTextContent('150 pts');
       expect(dados).toHaveTextContent('Regra aplicada10 pts por kg');
       expect(dados).toHaveTextContent('02/11/2026');
-      expect(dados).toHaveTextContent('Pessoa Teste · Equipe Araucária');
+      expect(dados).toHaveTextContent('Pessoa Teste · Araucária');
       expect(dados).toHaveTextContent('Avaliado porBruno Exemplo');
+    });
+
+    it('não repete a palavra Equipe quando ela já está no nome', async () => {
+      // Na Cestacorp as equipes se chamam "Equipe Araucária". A tela chegou a prefixar
+      // "Equipe" e exibia "Equipe Equipe Araucária" com os dados de verdade — os testes
+      // não pegavam porque usavam nomes curtos que o banco não tem.
+      const cenario = cenarioDoDetalhe();
+      cenario.lancamento.equipe = { ...cenario.lancamento.equipe, nome: 'Equipe Araucária' };
+      abrir('COLABORADOR', cenario);
+
+      expect(
+        await screen.findByRole('heading', { level: 1, name: 'Doação de tampinhas' }),
+      ).toBeVisible();
+      const dados = resumo();
+      expect(dados).toHaveTextContent('Pessoa Teste · Equipe Araucária');
+      expect(dados).not.toHaveTextContent('Equipe Equipe');
     });
 
     it('para o lançamento recusado, mostra o motivo e que não há pontos', async () => {
