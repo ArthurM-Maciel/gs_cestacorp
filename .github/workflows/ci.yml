@@ -79,10 +79,19 @@ jobs:
       - name: Segredos no diff
         run: |
           faixa="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
-          if git diff "$faixa" -- . ':(exclude).github/workflows' \
+
+          # Credencial apontando para a máquina de quem desenvolve não é segredo: o
+          # docker-compose, o .env.example e os scripts de teste usam usuário e senha
+          # fixos contra localhost de propósito. O que não pode passar é credencial de
+          # um host de verdade.
+          achados=$(git diff "$faixa" -- . ':(exclude).github/workflows' \
             | grep -E '^\+' \
-            | grep -Eiq '(postgres(ql)?://[^[:space:]]*:[^[:space:]]*@|aws_secret_access_key|-----BEGIN [A-Z ]*PRIVATE KEY-----)'; then
-            echo "::error::O diff parece conter credencial. Use variável de ambiente."
+            | grep -Ei '(postgres(ql)?://[^[:space:]]*:[^[:space:]]*@|aws_secret_access_key|-----BEGIN [A-Z ]*PRIVATE KEY-----)' \
+            | grep -Eiv '@(localhost|127\.0\.0\.1|db|postgres)(:[0-9]+)?/' || true)
+
+          if [ -n "$achados" ]; then
+            echo "::error::O diff parece conter credencial de um ambiente real. Use variável de ambiente."
+            printf '%s\n' "$achados" | head -5
             exit 1
           fi
 
