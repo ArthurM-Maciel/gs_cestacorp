@@ -129,7 +129,7 @@ export function CartaoDePosicao({ usuario }: { usuario: UsuarioAutenticado }) {
       className="rounded-cartao bg-marca-900 p-5 text-superficie shadow-sm lg:max-w-xl"
     >
       <p className="text-xs font-semibold tracking-wide text-marca-300 uppercase">
-        Equipe {linha.equipe.nome}
+        {linha.equipe.nome}
       </p>
       <h2 id="posicao-da-equipe" className="mt-1 text-2xl leading-tight font-bold text-balance">
         {tituloDaPosicao(posicao)}

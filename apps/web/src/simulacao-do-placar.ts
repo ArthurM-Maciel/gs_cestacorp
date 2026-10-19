@@ -27,11 +27,20 @@ export interface TotalDaEquipe {
   totalColaboradores: number;
 }
 
+/**
+ * O nome já vem completo, como no banco: as equipes da Cestacorp se chamam
+ * "Equipe Araucária", não "Araucária". Passar só "Ipê" aqui mascarava um defeito —
+ * a tela prefixava "Equipe" e, com os dados reais, exibia "Equipe Equipe Araucária".
+ */
 export function umTotalDeEquipe(
-  nome: string,
+  nomeCurtoOuCompleto: string,
   pontos: number,
   sobrepor: Partial<TotalDaEquipe> = {},
 ): TotalDaEquipe {
+  const nome = nomeCurtoOuCompleto.startsWith('Equipe ')
+    ? nomeCurtoOuCompleto
+    : `Equipe ${nomeCurtoOuCompleto}`;
+
   return {
     equipeId: novoId(),
     nome,

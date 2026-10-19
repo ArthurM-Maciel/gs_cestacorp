@@ -93,7 +93,9 @@ export function fraseDaDistancia(posicao: PosicaoDaEquipe): string {
   }
 
   const nomes = aFrente.map((equipe) => equipe.equipe.nome);
-  const quem = nomes.length === 1 ? `da Equipe ${nomes.join('')}` : `das equipes ${listar(nomes)}`;
+  // O nome já vem completo da API ("Equipe Araucária"); prefixar de novo duplicaria
+  // a palavra, e no plural "das equipes Equipe A e Equipe B" fica impronunciável.
+  const quem = nomes.length === 1 ? `da ${nomes.join('')}` : `de ${listar(nomes)}`;
   return `${formatarPontos(distancia)} atrás ${quem}`;
 }
 
@@ -104,6 +106,6 @@ export function fraseDoEmpate({ empatadasCom }: PosicaoDaEquipe): string | null 
   }
   const nomes = empatadasCom.map((equipe) => equipe.equipe.nome);
   return nomes.length === 1
-    ? `Empatada com a Equipe ${nomes.join('')}.`
+    ? `Empatada com a ${nomes.join('')}.`
     : `Empatada com as equipes ${listar(nomes)}.`;
 }

@@ -27,7 +27,7 @@ const colunas =
 function nomeDaLinha(linha: LinhaDoRanking, minha: boolean): string {
   const partes = [
     rotuloDaPosicao(linha),
-    `Equipe ${linha.equipe.nome}`,
+    linha.equipe.nome,
     ...(minha ? ['sua equipe'] : []),
     linha.lider === null ? 'Sem líder' : `Líder: ${linha.lider.nome}`,
     `${formatarNumero(linha.acoesAprovadas)} ${linha.acoesAprovadas === 1 ? 'ação' : 'ações'}`,
@@ -94,7 +94,7 @@ export function ListaDoRanking({ linhas, minhaEquipeId, aoAbrir }: Props) {
                 </span>
 
                 <span className="flex flex-wrap items-center gap-x-2 gap-y-1 font-bold lg:font-semibold">
-                  Equipe {linha.equipe.nome}
+                  {linha.equipe.nome}
                   {linha.empatada && <Etiqueta tom="neutro">empate</Etiqueta>}
                   {minha && <Etiqueta tom="sucesso">sua equipe</Etiqueta>}
                 </span>

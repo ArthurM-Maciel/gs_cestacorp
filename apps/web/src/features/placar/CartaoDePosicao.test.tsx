@@ -185,7 +185,7 @@ describe('Cartão de posição no início (US11)', () => {
       const { estado, gincana, bruno, camila, euMesma, araucaria, equipe, alimentos } =
         cenarioDeLancamentos();
       // A usuária lidera a Araucária, que está sem pontos; a Ipê tem 300 aprovados.
-      const equipeIpe = umaEquipe(gincana.id, 'Ipê', { lider: bruno, totalMembros: 2 });
+      const equipeIpe = umaEquipe(gincana.id, 'Equipe Ipê', { lider: bruno, totalMembros: 2 });
       estado.equipes = [{ ...araucaria, lider: euMesma }, equipeIpe];
       const aAprovar = umLancamento(alimentos, camila, equipe, { quantidade: 12 });
       estado.lancamentos = [
@@ -193,7 +193,7 @@ describe('Cartão de posição no início (US11)', () => {
         umLancamento(
           alimentos,
           bruno,
-          { id: equipeIpe.id, nome: 'Ipê' },
+          { id: equipeIpe.id, nome: 'Equipe Ipê' },
           {
             quantidade: 30,
             status: 'APROVADO',
