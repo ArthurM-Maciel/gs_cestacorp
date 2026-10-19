@@ -285,7 +285,7 @@ function Fila({ usuario }: { usuario: UsuarioAutenticado }) {
             ? 'Todas as equipes'
             : equipeLiderada === undefined
               ? 'Sua equipe'
-              : `Equipe ${equipeLiderada.nome}`
+              : equipeLiderada.nome
         }
         titulo={titulo(quantasPendentes)}
         descricao="Abra o comprovante antes de aprovar. Cada decisão fica no histórico."
