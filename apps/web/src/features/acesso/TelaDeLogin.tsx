@@ -3,11 +3,11 @@ import { useMutation } from '@tanstack/react-query';
 import { useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 
-import { botaoPrimario } from '../../components/estilos-de-botao.js';
+import { botaoPrimario } from '../../components/ui/estilos-de-botao.js';
 import { detalhesDoErro, mensagemDeErro } from '../../lib/api.js';
 import { postarLogin } from '../../lib/autenticacao.js';
 import { useSessao } from '../../lib/sessao.js';
-import { CampoDeTexto } from './CampoDeTexto.js';
+import { CampoDeTexto } from '../../components/ui/CampoDeTexto.js';
 import { IconeCadeado, IconeConfirmar, IconeEmail, IconeOlho, IconeOlhoCortado } from './Icones.js';
 import { LayoutDeAcesso } from './LayoutDeAcesso.js';
 

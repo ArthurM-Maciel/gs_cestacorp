@@ -7,6 +7,9 @@ import { env } from './env.js';
 import { logger } from './logger.js';
 import { rotaNaoEncontrada, tratadorDeErros } from './middlewares/erros.js';
 import { authRouter } from './modules/auth/routes.js';
+import { colaboradoresRouter } from './modules/colaboradores/routes.js';
+import { equipesRouter } from './modules/equipes/routes.js';
+import { gincanasRouter } from './modules/gincanas/routes.js';
 import { healthRouter } from './modules/health/routes.js';
 
 /**
@@ -24,6 +27,9 @@ export function criarApp(): Express {
 
   app.use(healthRouter);
   app.use(authRouter);
+  app.use(gincanasRouter);
+  app.use(equipesRouter);
+  app.use(colaboradoresRouter);
 
   app.use(rotaNaoEncontrada);
   app.use(tratadorDeErros);

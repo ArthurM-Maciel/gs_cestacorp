@@ -24,3 +24,18 @@ export function renderizarNaRota(caminho: string) {
 
   return { ...resultado, roteador, queryClient };
 }
+
+/**
+ * Faz o que o navegador faz ao apertar Esc num diálogo modal: dispara `cancel` e, se
+ * ninguém o impedir, fecha. O jsdom não trata a tecla sozinho.
+ */
+export function pressionarEsc(dialogo: HTMLElement): void {
+  if (!(dialogo instanceof HTMLDialogElement)) {
+    throw new Error('pressionarEsc espera um <dialog>.');
+  }
+  const cancelamento = new Event('cancel', { cancelable: true });
+  dialogo.dispatchEvent(cancelamento);
+  if (!cancelamento.defaultPrevented) {
+    dialogo.close();
+  }
+}

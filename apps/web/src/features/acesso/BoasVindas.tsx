@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-import { botaoContorno, botaoPrimario } from '../../components/estilos-de-botao.js';
+import { botaoContorno, botaoPrimario } from '../../components/ui/estilos-de-botao.js';
 import { IconeMaos } from './Icones.js';
 import { PainelDaMarca } from './PainelDaMarca.js';
 

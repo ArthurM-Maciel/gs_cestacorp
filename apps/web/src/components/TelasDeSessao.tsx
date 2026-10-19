@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { caminhoInicial } from '../lib/destinos.js';
 import { CartaoDeMensagem } from './CartaoDeMensagem.js';
-import { botaoContorno, botaoPrimario } from './estilos-de-botao.js';
+import { botaoContorno, botaoPrimario } from './ui/estilos-de-botao.js';
 
 export function TelaDeCarregamento({ mensagem }: { mensagem: string }) {
   return (
