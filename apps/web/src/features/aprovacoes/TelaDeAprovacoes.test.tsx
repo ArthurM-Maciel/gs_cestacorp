@@ -162,7 +162,7 @@ describe('Fila de aprovações (US08)', () => {
 
       const tabela = await abrirFila();
 
-      const links = within(linhasDe(tabela)[0]!).getAllByRole('link');
+      const links = within(linhasDe(tabela)[0]!).getAllByRole('link', { name: /comprovante/i });
       expect(links.map((link) => link.textContent?.split(' de ')[0])).toEqual([
         'Ver comprovante 1',
         'Ver comprovante 2',
@@ -180,7 +180,7 @@ describe('Fila de aprovações (US08)', () => {
       const tabela = await abrirFila();
 
       const linha = linhasDe(tabela)[0]!;
-      expect(within(linha).queryByRole('link')).not.toBeInTheDocument();
+      expect(within(linha).queryByRole('link', { name: /comprovante/i })).not.toBeInTheDocument();
       expect(linha).toHaveTextContent('endereço do arquivo indisponível');
     });
 

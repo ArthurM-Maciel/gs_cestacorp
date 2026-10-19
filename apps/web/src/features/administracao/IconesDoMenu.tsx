@@ -78,3 +78,13 @@ export function IconePlacar(props: Props) {
     </svg>
   );
 }
+
+/** Prancheta com linhas: o registro de quem fez o quê. */
+export function IconeAuditoria(props: Props) {
+  return (
+    <svg {...traco} {...props}>
+      <rect x="5" y="4" width="14" height="17" rx="2.5" />
+      <path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3" />
+    </svg>
+  );
+}
