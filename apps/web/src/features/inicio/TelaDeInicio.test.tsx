@@ -107,7 +107,9 @@ describe('Início do colaborador (US10)', () => {
 
       const tabela = await abrirInicio();
 
-      expect(within(tabela).queryByRole('link')).not.toBeInTheDocument();
+      expect(
+        within(tabela).queryByRole('link', { name: /corrigir|anexar|reenviar/i }),
+      ).not.toBeInTheDocument();
     });
 
     it('traz mais lançamentos sob demanda', async () => {
@@ -190,7 +192,7 @@ describe('Início do colaborador (US10)', () => {
   });
 
   describe('resumo', () => {
-    it('conta os lançamentos aguardando e os aprovados, sem inventar a posição da equipe', async () => {
+    it('conta os lançamentos aguardando e os aprovados', async () => {
       const { estado, euMesma, equipe, alimentos, roupas } = cenarioDeLancamentos();
       estado.lancamentos = [
         umLancamento(alimentos, euMesma, equipe),
@@ -203,8 +205,6 @@ describe('Início do colaborador (US10)', () => {
 
       expect(screen.getByText('Aguardando aprovação').nextElementSibling).toHaveTextContent('2');
       expect(screen.getByText('Aprovados').nextElementSibling).toHaveTextContent('1');
-      expect(screen.getByText(/posição da sua equipe no placar chega em breve/i)).toBeVisible();
-      expect(screen.queryByText(/lugar/i)).not.toBeInTheDocument();
     });
   });
 

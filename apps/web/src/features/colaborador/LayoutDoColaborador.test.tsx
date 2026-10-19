@@ -15,7 +15,7 @@ const menuInferior = () => screen.getByRole('navigation', { name: 'Menu inferior
 
 describe('Layout do colaborador e do líder', () => {
   describe('colaborador', () => {
-    it('tem na barra do celular só destinos que existem: Início e Registrar', async () => {
+    it('tem na barra do celular os três destinos do protótipo: Início, Registrar e Placar', async () => {
       const { estado } = cenarioDeLancamentos();
       comSessaoDe('COLABORADOR', rotasDeLancamentos(estado));
 
@@ -26,11 +26,12 @@ describe('Layout do colaborador e do líder', () => {
       expect(barra.getAllByRole('link').map((link) => link.textContent)).toEqual([
         'Início',
         'Registrar',
+        'Placar',
       ]);
       expect(barra.getByRole('link', { name: 'Início' })).toHaveAttribute('aria-current', 'page');
     });
 
-    it('mostra o Placar como "Em breve", sem link, no menu lateral', async () => {
+    it('leva ao Placar pelo menu lateral, sem nenhum item "Em breve"', async () => {
       const { estado } = cenarioDeLancamentos();
       comSessaoDe('COLABORADOR', rotasDeLancamentos(estado));
 
@@ -43,9 +44,8 @@ describe('Layout do colaborador e do líder', () => {
         'href',
         '/registrar',
       );
-      expect(menu.queryByRole('link', { name: /placar/i })).not.toBeInTheDocument();
-      expect(menu.getByText('Placar')).toBeVisible();
-      expect(menu.getByText('Em breve')).toBeVisible();
+      expect(menu.getByRole('link', { name: 'Placar' })).toHaveAttribute('href', '/placar');
+      expect(menu.queryByText('Em breve')).not.toBeInTheDocument();
       expect(menu.queryByText(/aprova/i)).not.toBeInTheDocument();
     });
 
@@ -107,9 +107,10 @@ describe('Layout do colaborador e do líder', () => {
         'href',
         '/aprovacoes',
       );
-      expect(barra.getAllByRole('link')).toHaveLength(3);
+      expect(barra.getAllByRole('link')).toHaveLength(4);
       expect(barra.getAllByRole('link')[0]).toHaveAccessibleName('Início');
       expect(barra.getAllByRole('link')[2]).toHaveAccessibleName('Registrar');
+      expect(barra.getAllByRole('link')[3]).toHaveAccessibleName('Placar');
     });
 
     it('não conta como aprovação o lançamento da própria pessoa', async () => {
@@ -128,7 +129,7 @@ describe('Layout do colaborador e do líder', () => {
       ).toBeVisible();
     });
 
-    it('lista Aprovações, Registrar ação e o Placar em breve no menu lateral', async () => {
+    it('lista Aprovações, Registrar ação e Placar no menu lateral', async () => {
       const { estado } = cenarioDeLancamentos();
       comSessaoDe('LIDER', rotasDeLancamentos(estado));
 
@@ -140,8 +141,9 @@ describe('Layout do colaborador e do líder', () => {
         'Início',
         'Aprovações',
         'Registrar ação',
+        'Placar',
       ]);
-      expect(menu.getByText('Em breve')).toBeVisible();
+      expect(menu.queryByText('Em breve')).not.toBeInTheDocument();
       expect(
         await within(screen.getByRole('complementary')).findByText('Líder da equipe Araucária'),
       ).toBeVisible();

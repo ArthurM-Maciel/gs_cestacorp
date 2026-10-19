@@ -1,6 +1,7 @@
 import { type ItemDoMenu } from '../../components/ui/MoldeDeNavegacao.js';
 import {
   IconeAprovacoes,
+  IconeAuditoria,
   IconeColaboradores,
   IconeEquipes,
   IconeGincanas,
@@ -35,5 +36,6 @@ export const itensDoMenu: readonly ItemDoMenu[] = [
     Icone: IconeAprovacoes,
     caminho: '/aprovacoes',
   },
-  { chave: 'placar', rotulo: 'Placar', Icone: IconePlacar, caminho: null },
+  { chave: 'placar', rotulo: 'Placar', Icone: IconePlacar, caminho: '/placar' },
+  { chave: 'auditoria', rotulo: 'Auditoria', Icone: IconeAuditoria, caminho: '/auditoria' },
 ];

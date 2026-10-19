@@ -18,7 +18,12 @@ import {
 import { useRef } from 'react';
 
 import { api } from '../../lib/api.js';
-import { chaveDasPrevias, chaveDosLancamentos } from '../../lib/chaves-de-consulta.js';
+import {
+  chaveDaAuditoria,
+  chaveDasPrevias,
+  chaveDoRanking,
+  chaveDosLancamentos,
+} from '../../lib/chaves-de-consulta.js';
 import {
   corrigirLancamento,
   registrarLancamento,
@@ -129,13 +134,23 @@ export function usePrevia(entrada: PreviaDeLancamento | null) {
 }
 
 /**
- * Registrar muda a lista da pessoa, os totais do início e a fila de quem aprova. Invalidar
- * a chave curta atinge todas essas consultas; a promessa devolvida faz a gravação só
- * terminar depois das listas novas chegarem.
+ * Registrar, corrigir, aprovar ou recusar muda a lista da pessoa, os totais do início, a
+ * fila de quem aprova, a linha do tempo do lançamento (que vive sob a chave dos lançamentos),
+ * o placar e o painel de auditoria. Invalidar as chaves curtas atinge todas essas consultas,
+ * com as variações de filtro e de período; a promessa devolvida faz a gravação só terminar
+ * depois das listas novas chegarem.
+ *
+ * Os dois fluxos (lançar e decidir) usam este mesmo hook: se um deles esquecesse uma chave,
+ * a tela dele mostraria o placar de antes da decisão.
  */
-function useInvalidarLancamentos() {
+export function useInvalidarLancamentos() {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: chaveDosLancamentos });
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: chaveDosLancamentos }),
+      queryClient.invalidateQueries({ queryKey: chaveDoRanking }),
+      queryClient.invalidateQueries({ queryKey: chaveDaAuditoria }),
+    ]);
 }
 
 export function useRegistrarLancamento(aoMudarEtapa: (etapa: EtapaDoEnvio) => void) {

@@ -108,7 +108,8 @@ describe('Fila de aprovações (US08)', () => {
       expect(
         screen.getByText('Abra o comprovante antes de aprovar. Cada decisão fica no histórico.'),
       ).toBeVisible();
-      expect(await screen.findByText('Equipe Araucária')).toBeVisible();
+      // O cabeçalho mostra o nome da equipe como ele vem da API, sem prefixar "Equipe".
+      expect(await screen.findByText('Araucária')).toBeVisible();
       expect(screen.getByRole('tab', { name: 'Pendentes · 3' })).toHaveAttribute(
         'aria-selected',
         'true',
@@ -162,7 +163,7 @@ describe('Fila de aprovações (US08)', () => {
 
       const tabela = await abrirFila();
 
-      const links = within(linhasDe(tabela)[0]!).getAllByRole('link');
+      const links = within(linhasDe(tabela)[0]!).getAllByRole('link', { name: /comprovante/i });
       expect(links.map((link) => link.textContent?.split(' de ')[0])).toEqual([
         'Ver comprovante 1',
         'Ver comprovante 2',
@@ -180,7 +181,7 @@ describe('Fila de aprovações (US08)', () => {
       const tabela = await abrirFila();
 
       const linha = linhasDe(tabela)[0]!;
-      expect(within(linha).queryByRole('link')).not.toBeInTheDocument();
+      expect(within(linha).queryByRole('link', { name: /comprovante/i })).not.toBeInTheDocument();
       expect(linha).toHaveTextContent('endereço do arquivo indisponível');
     });
 
@@ -816,8 +817,8 @@ describe('Fila de aprovações (US08)', () => {
       expect(
         screen.getByRole('heading', { level: 1, name: 'Você tem 4 aprovações' }),
       ).toBeVisible();
-      expect(tabela).toHaveTextContent('Equipe Araucária');
-      expect(tabela).toHaveTextContent('Equipe Paineira');
+      expect(tabela).toHaveTextContent('Araucária');
+      expect(tabela).toHaveTextContent('Paineira');
 
       const menu = within(screen.getByRole('navigation', { name: 'Menu principal' }));
       expect(menu.getByRole('link', { name: 'Painel' })).toBeVisible();

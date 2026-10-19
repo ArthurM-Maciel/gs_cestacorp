@@ -9,14 +9,17 @@ import { CriarContaEmBreve } from './features/acesso/CriarContaEmBreve.js';
 import { TelaDeLogin } from './features/acesso/TelaDeLogin.js';
 import { LayoutDaAdministradora } from './features/administracao/LayoutDaAdministradora.js';
 import { TelaDeAprovacoes } from './features/aprovacoes/TelaDeAprovacoes.js';
+import { TelaDeAuditoria } from './features/auditoria/TelaDeAuditoria.js';
 import { TelaDeColaboradores } from './features/colaboradores/TelaDeColaboradores.js';
 import { LayoutDoColaborador } from './features/colaborador/LayoutDoColaborador.js';
 import { TelaDeEquipes } from './features/equipes/TelaDeEquipes.js';
 import { TelaDeGincanas } from './features/gincanas/TelaDeGincanas.js';
 import { TelaDeInicio } from './features/inicio/TelaDeInicio.js';
 import { TelaDeCorrigir } from './features/lancamentos/TelaDeCorrigir.js';
+import { TelaDeDetalhe } from './features/lancamentos/TelaDeDetalhe.js';
 import { TelaDeRegistrar } from './features/lancamentos/TelaDeRegistrar.js';
 import { PainelEmBreve } from './features/painel/PainelEmBreve.js';
+import { TelaDoPlacar } from './features/placar/TelaDoPlacar.js';
 
 /**
  * Mapa de rotas. Cada história acrescenta as suas aqui, em poucas linhas, dentro do grupo
@@ -53,6 +56,21 @@ export const rotas: RouteObject[] = [
         ],
       },
       {
+        // Telas dos três perfis: o placar (US11) e o detalhe de um lançamento com o histórico
+        // dele (US09). Cada perfil as vê dentro do próprio menu; quem pode abrir qual
+        // lançamento é decisão da API, que devolve 404 para o que a pessoa não alcança.
+        element: <RotaProtegida />,
+        children: [
+          {
+            element: <LayoutPorPapel />,
+            children: [
+              { path: '/placar', element: <TelaDoPlacar /> },
+              { path: '/lancamentos/:id', element: <TelaDeDetalhe /> },
+            ],
+          },
+        ],
+      },
+      {
         // A administradora também aprova qualquer lançamento, dentro do menu dela.
         element: <RotaProtegida papeis={['LIDER', 'ADMIN']} />,
         children: [
@@ -73,6 +91,7 @@ export const rotas: RouteObject[] = [
               { path: '/gincanas', element: <TelaDeGincanas /> },
               { path: '/equipes', element: <TelaDeEquipes /> },
               { path: '/colaboradores', element: <TelaDeColaboradores /> },
+              { path: '/auditoria', element: <TelaDeAuditoria /> },
             ],
           },
         ],

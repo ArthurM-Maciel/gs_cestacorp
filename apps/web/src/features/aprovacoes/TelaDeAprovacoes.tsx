@@ -86,7 +86,7 @@ function montarColunas({
           </span>
           {/* A administradora vê todas as equipes: sem o nome da equipe, não dá para saber de onde veio. */}
           {usuario.papel === 'ADMIN' && (
-            <span className="block text-sm text-texto-suave">Equipe {lancamento.equipe.nome}</span>
+            <span className="block text-sm text-texto-suave">{lancamento.equipe.nome}</span>
           )}
         </>
       ),
@@ -285,7 +285,7 @@ function Fila({ usuario }: { usuario: UsuarioAutenticado }) {
             ? 'Todas as equipes'
             : equipeLiderada === undefined
               ? 'Sua equipe'
-              : `Equipe ${equipeLiderada.nome}`
+              : equipeLiderada.nome
         }
         titulo={titulo(quantasPendentes)}
         descricao="Abra o comprovante antes de aprovar. Cada decisão fica no histórico."
