@@ -9,7 +9,7 @@ export function App() {
       <p className="text-sm font-medium tracking-wide text-marca-600 uppercase">Cestacorp</p>
       <h1 className="text-4xl font-bold text-balance">
         Gincana Solidária
-        <span className="block text-marca-700">sem planilha</span>
+        <span className="block text-marca-600">sem planilha</span>
       </h1>
       <p className="text-texto-suave max-w-prose">
         Registre suas ações solidárias, envie o comprovante e acompanhe sua equipe. As telas entram

@@ -1,40 +1,47 @@
 @import 'tailwindcss';
 
 /**
- * Tokens da identidade do protótipo.
+ * Tokens da identidade, extraídos do protótipo no Figma
+ * (arquivo "Gincana Solidária · App", 18/10/2026).
  *
- * Os valores são uma aproximação lida das telas: enquanto o acesso de editor ao arquivo
- * do Figma não sai, não temos as variáveis originais. Ao receber o acesso, troque só
- * este bloco — nenhum componente deve usar cor literal.
+ * O arquivo não define variáveis de design, então os valores vieram da amostragem das
+ * telas. Nenhum componente usa cor literal: mudança de identidade acontece só aqui.
  */
 @theme {
-  --color-marca-900: #1f4430;
-  --color-marca-800: #2a5a3d;
-  --color-marca-700: #356e4b;
-  --color-marca-600: #3f8257;
-  --color-marca-400: #7fc08f;
-  --color-marca-200: #c3e5cd;
-  --color-marca-50: #eef6f0;
+  /* Verde escuro do topo das telas e do menu lateral no computador */
+  --color-marca-900: #1e3a2f;
+  --color-marca-800: #2c4b3c;
+  --color-marca-700: #315242;
 
-  --color-fundo: #f4f7f3;
+  /* Verde dos botões primários e dos números em destaque */
+  --color-marca-600: #2f7d4f;
+  --color-marca-500: #428d60;
+
+  /* Verde claro do pódio e dos realces */
+  --color-marca-300: #a7e3b9;
+  --color-marca-100: #e3f3e8;
+  --color-marca-50: #f2fbf5;
+
+  --color-fundo: #eef5f0;
   --color-superficie: #ffffff;
 
-  --color-texto: #15241b;
+  --color-texto: #0d1b14;
   --color-texto-suave: #5b6a60;
 
-  /* Estados de lançamento, iguais aos do protótipo */
-  --color-pendente: #f0a94c;
-  --color-pendente-fundo: #fdf3e3;
-  --color-aprovado: #3f8257;
-  --color-aprovado-fundo: #e7f3ea;
-  --color-recusado: #d6555a;
+  /* Estados do lançamento, como aparecem nas etiquetas do protótipo */
+  --color-pendente: #8a5a00;
+  --color-pendente-fundo: #fdf1d6;
+  --color-aprovado: #245f3c;
+  --color-aprovado-fundo: #e3f3e8;
+  --color-recusado: #b3261e;
   --color-recusado-fundo: #fbeaea;
 
-  /* Uma cor pastel por família de ação, como no protótipo */
-  --color-acao-alimentos: #fae0d0;
-  --color-acao-tampinhas: #d9efe0;
-  --color-acao-roupas: #dde5f8;
-  --color-acao-curso: #e6ddf8;
+  /* Uma cor por família de ação: o colaborador reconhece o tipo pela cor antes de ler */
+  --color-acao-alimentos: #ffe7d6;
+  --color-acao-tampinhas: #ddf3f0;
+  --color-acao-roupas: #dcebff;
+  --color-acao-curso: #ece4ff;
+  --color-acao-outra: #fff3c4;
 
   --radius-cartao: 1rem;
 }
@@ -43,4 +50,12 @@ body {
   background-color: var(--color-fundo);
   color: var(--color-texto);
   -webkit-font-smoothing: antialiased;
+}
+
+/* O protótipo é desenhado para o aparelho; a área segura evita que a barra inferior
+   fique sob o indicador de gesto do iPhone. */
+@supports (padding: max(0px)) {
+  .pb-seguro {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
 }
