@@ -18,6 +18,7 @@ import { useSessao } from '../../lib/sessao.js';
 import { CelulaDaAcao } from '../lancamentos/CelulaDaAcao.js';
 import { EtiquetaDeStatus } from '../lancamentos/EtiquetaDeStatus.js';
 import { useMeusLancamentos, useTotalDeMeusLancamentos } from '../lancamentos/lancamentos-api.js';
+import { CartaoDePosicao } from '../placar/CartaoDePosicao.js';
 import { lerAvisoDaNavegacao } from './aviso-da-navegacao.js';
 
 function Total({
@@ -236,6 +237,8 @@ function Inicio({ usuario }: { usuario: UsuarioAutenticado }) {
         </AvisoDeErro>
       )}
 
+      <CartaoDePosicao usuario={usuario} />
+
       <dl aria-label="Resumo dos meus lançamentos" className="grid grid-cols-2 gap-3 lg:max-w-md">
         <Total
           rotulo="Aguardando aprovação"
@@ -250,9 +253,6 @@ function Inicio({ usuario }: { usuario: UsuarioAutenticado }) {
           cor="text-aprovado"
         />
       </dl>
-      <p className="-mt-3 text-sm text-texto-suave">
-        A posição da sua equipe no placar chega em breve.
-      </p>
 
       <MeusLancamentos usuario={usuario} />
     </div>
@@ -261,9 +261,7 @@ function Inicio({ usuario }: { usuario: UsuarioAutenticado }) {
 
 /**
  * US10 — o colaborador acompanha o status dos próprios lançamentos.
- *
- * O cartão "posição da equipe" do protótipo é da US11 (placar): aqui fica só o aviso de que
- * chega em breve, em vez de um número inventado.
+ * US11 — e a posição da equipe dele no placar, no cartão do topo.
  */
 export function TelaDeInicio() {
   const { usuario } = useSessao();
