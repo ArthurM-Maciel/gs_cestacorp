@@ -816,8 +816,8 @@ describe('Fila de aprovações (US08)', () => {
       expect(
         screen.getByRole('heading', { level: 1, name: 'Você tem 4 aprovações' }),
       ).toBeVisible();
-      expect(tabela).toHaveTextContent('Equipe Araucária');
-      expect(tabela).toHaveTextContent('Equipe Paineira');
+      expect(tabela).toHaveTextContent('Araucária');
+      expect(tabela).toHaveTextContent('Paineira');
 
       const menu = within(screen.getByRole('navigation', { name: 'Menu principal' }));
       expect(menu.getByRole('link', { name: 'Painel' })).toBeVisible();

@@ -112,7 +112,7 @@ function Resumo({ lancamento }: { lancamento: Lancamento }) {
       </Item>
       <Item rotulo="Data da ação">{formatarData(lancamento.dataAcao)}</Item>
       <Item rotulo="Registrado por" largo>
-        {lancamento.colaborador.nome} · Equipe {lancamento.equipe.nome}
+        {lancamento.colaborador.nome} · {lancamento.equipe.nome}
       </Item>
       {lancamento.avaliadoPor !== null && (
         <Item rotulo={lancamento.status === 'RECUSADO' ? 'Recusado por' : 'Avaliado por'} largo>
@@ -194,7 +194,7 @@ export function TelaDeDetalhe() {
       <CabecalhoDePagina
         sobretitulo="Lançamento"
         titulo={lancamento.tipoAcao.nome}
-        descricao={`Registrado por ${lancamento.colaborador.nome}, da equipe ${lancamento.equipe.nome}.`}
+        descricao={`Registrado por ${lancamento.colaborador.nome}, da ${lancamento.equipe.nome}.`}
       />
       <Resumo lancamento={lancamento} />
       <HistoricoDoLancamento lancamento={lancamento} />
