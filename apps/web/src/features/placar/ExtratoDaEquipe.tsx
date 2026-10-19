@@ -35,7 +35,7 @@ export function ExtratoDaEquipe({ gincanaId, linha, periodo, rotuloDoPeriodo, ao
 
   return (
     <Dialogo
-      titulo={`Equipe ${linha.equipe.nome}`}
+      titulo={linha.equipe.nome}
       descricao={`${rotuloDaPosicao(linha)} · ${rotuloDoPeriodo}`}
       aoFechar={aoFechar}
     >

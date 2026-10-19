@@ -61,7 +61,7 @@ export function Podio({ linhas, minhaEquipeId, aoAbrir }: Props) {
               >
                 {/* O que o leitor de tela ouve: "1º lugar, Ipê, sua equipe, 4.280 pontos". */}
                 <span className="sr-only">
-                  {rotuloDaPosicao(linha)}: Equipe {linha.equipe.nome}
+                  {rotuloDaPosicao(linha)}: {linha.equipe.nome}
                   {minha ? ', sua equipe' : ''}, {formatarNumero(linha.pontos)} pontos
                 </span>
 

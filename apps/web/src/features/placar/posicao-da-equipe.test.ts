@@ -10,10 +10,10 @@ import {
   tituloDaPosicao,
 } from './posicao-da-equipe.js';
 
-const ipe = umTotalDeEquipe('Ipê', 4280);
-const araucaria = umTotalDeEquipe('Araucária', 3910);
-const jacaranda = umTotalDeEquipe('Jacarandá', 3355);
-const paineira = umTotalDeEquipe('Paineira', 3120);
+const ipe = umTotalDeEquipe('Equipe Ipê', 4280);
+const araucaria = umTotalDeEquipe('Equipe Araucária', 3910);
+const jacaranda = umTotalDeEquipe('Equipe Jacarandá', 3355);
+const paineira = umTotalDeEquipe('Equipe Paineira', 3120);
 
 function posicaoDe(equipe: { equipeId: string }, ...todas: ReturnType<typeof umTotalDeEquipe>[]) {
   const posicao = posicaoDaEquipe(classificar(todas), equipe.equipeId);
@@ -28,7 +28,7 @@ describe('posicaoDaEquipe', () => {
     const posicao = posicaoDe(paineira, ipe, araucaria, jacaranda, paineira);
 
     expect(posicao.linha.posicao).toBe(4);
-    expect(posicao.aFrente.map((equipe) => equipe.equipe.nome)).toEqual(['Jacarandá']);
+    expect(posicao.aFrente.map((equipe) => equipe.equipe.nome)).toEqual(['Equipe Jacarandá']);
     expect(posicao.distancia).toBe(235);
   });
 
@@ -40,20 +40,23 @@ describe('posicaoDaEquipe', () => {
   });
 
   it('com várias equipes empatadas logo à frente, devolve todas elas', () => {
-    const figueira = umTotalDeEquipe('Figueira', 3355);
+    const figueira = umTotalDeEquipe('Equipe Figueira', 3355);
     const posicao = posicaoDe(paineira, ipe, jacaranda, figueira, paineira);
 
     expect(posicao.linha.posicao).toBe(4);
-    expect(posicao.aFrente.map((equipe) => equipe.equipe.nome)).toEqual(['Figueira', 'Jacarandá']);
+    expect(posicao.aFrente.map((equipe) => equipe.equipe.nome)).toEqual([
+      'Equipe Figueira',
+      'Equipe Jacarandá',
+    ]);
     expect(posicao.distancia).toBe(235);
   });
 
   it('lista as equipes que dividem a mesma posição', () => {
-    const gemea = umTotalDeEquipe('Gêmea', 3910);
+    const gemea = umTotalDeEquipe('Equipe Gêmea', 3910);
     const posicao = posicaoDe(araucaria, ipe, araucaria, gemea);
 
     expect(posicao.linha).toMatchObject({ posicao: 2, empatada: true });
-    expect(posicao.empatadasCom.map((equipe) => equipe.equipe.nome)).toEqual(['Gêmea']);
+    expect(posicao.empatadasCom.map((equipe) => equipe.equipe.nome)).toEqual(['Equipe Gêmea']);
     // A distância é para quem está acima do empate, a líder.
     expect(posicao.distancia).toBe(370);
   });
@@ -80,14 +83,14 @@ describe('frases do cartão de posição', () => {
   });
 
   it('nomeia todas as equipes à frente quando elas estão empatadas', () => {
-    const figueira = umTotalDeEquipe('Figueira', 3355);
+    const figueira = umTotalDeEquipe('Equipe Figueira', 3355);
     const posicao = posicaoDe(paineira, ipe, jacaranda, figueira, paineira);
 
-    expect(fraseDaDistancia(posicao)).toBe('235 pts atrás das equipes Figueira e Jacarandá');
+    expect(fraseDaDistancia(posicao)).toBe('235 pts atrás de Equipe Figueira e Equipe Jacarandá');
   });
 
   it('avisa o empate pelo nome da outra equipe', () => {
-    const gemea = umTotalDeEquipe('Gêmea', 3910);
+    const gemea = umTotalDeEquipe('Equipe Gêmea', 3910);
     const posicao = posicaoDe(araucaria, ipe, araucaria, gemea);
 
     expect(tituloDaPosicao(posicao)).toBe('Sua equipe está em segundo lugar!');
@@ -129,17 +132,17 @@ describe('posição por extenso', () => {
 describe('classificar (o duplo da API nos testes)', () => {
   it('numera como o contrato: 1, 2, 2, 4, com o empate marcado nas duas equipes', () => {
     const linhas = classificar([
-      umTotalDeEquipe('Ipê', 4280),
-      umTotalDeEquipe('Jacarandá', 3910),
-      umTotalDeEquipe('Araucária', 3910),
-      umTotalDeEquipe('Paineira', 3120),
+      umTotalDeEquipe('Equipe Ipê', 4280),
+      umTotalDeEquipe('Equipe Jacarandá', 3910),
+      umTotalDeEquipe('Equipe Araucária', 3910),
+      umTotalDeEquipe('Equipe Paineira', 3120),
     ]);
 
     expect(linhas.map((linha) => [linha.equipe.nome, linha.posicao, linha.empatada])).toEqual([
-      ['Ipê', 1, false],
-      ['Araucária', 2, true],
-      ['Jacarandá', 2, true],
-      ['Paineira', 4, false],
+      ['Equipe Ipê', 1, false],
+      ['Equipe Araucária', 2, true],
+      ['Equipe Jacarandá', 2, true],
+      ['Equipe Paineira', 4, false],
     ]);
   });
 });
