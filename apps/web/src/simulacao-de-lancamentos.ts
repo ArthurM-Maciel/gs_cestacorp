@@ -16,6 +16,7 @@ import { dataDeHoje } from './lib/dia-relativo.js';
 import { gravarToken } from './lib/token.js';
 import { simularApi, usuarioDeTeste, type Simulacao } from './simulacao-da-api.js';
 import { novoId, umaEquipe, umaGincana } from './simulacao-do-cadastro.js';
+import { classificar, periodoDa, umRanking, type TotalDaEquipe } from './simulacao-do-placar.js';
 
 /**
  * Dados e rotas de mentira para as telas de lançamento (início, registrar, corrigir e fila
@@ -194,6 +195,29 @@ export function rotasDeLancamentos(estado: EstadoDosLancamentos): Record<string,
   };
 
   if (gincana !== undefined) {
+    // O placar é calculado do estado, como a API faz: só lançamento aprovado soma, dentro do
+    // período pedido (pela data da ação). Aprovar na simulação muda a leitura seguinte.
+    rotas[`GET /gincanas/${gincana.id}/ranking`] = (requisicao) => {
+      const periodo = periodoDa(requisicao);
+      const totais = estado.equipes.map((equipe): TotalDaEquipe => {
+        const aprovados = estado.lancamentos.filter(
+          (l) =>
+            l.status === 'APROVADO' &&
+            l.equipeId === equipe.id &&
+            (periodo.desde === undefined || l.dataAcao >= periodo.desde) &&
+            (periodo.ate === undefined || l.dataAcao <= periodo.ate),
+        );
+        return {
+          equipeId: equipe.id,
+          nome: equipe.nome,
+          lider: equipe.lider,
+          pontos: aprovados.reduce((soma, l) => soma + l.pontosCalculados, 0),
+          acoesAprovadas: aprovados.length,
+          totalColaboradores: equipe.totalMembros,
+        };
+      });
+      return { status: 200, dados: umRanking(gincana, classificar(totais), periodo) };
+    };
     rotas[`GET /gincanas/${gincana.id}/equipes`] = () => ({ status: 200, dados: estado.equipes });
     rotas[`GET /gincanas/${gincana.id}/tipos-acao`] = () => ({
       status: 200,

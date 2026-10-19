@@ -17,8 +17,12 @@ const registrar: ItemDoMenu = {
   caminho: '/registrar',
 };
 
-/** O placar é da US11. Enquanto não existe, aparece como aviso e nunca como link. */
-const placar: ItemDoMenu = { chave: 'placar', rotulo: 'Placar', Icone: IconePlacar, caminho: null };
+const placar: ItemDoMenu = {
+  chave: 'placar',
+  rotulo: 'Placar',
+  Icone: IconePlacar,
+  caminho: '/placar',
+};
 
 export function itensDoColaborador(): readonly ItemDoMenu[] {
   return [inicio, registrar, placar];

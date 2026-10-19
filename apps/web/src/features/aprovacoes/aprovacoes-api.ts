@@ -4,11 +4,15 @@ import {
   type PaginaDeLancamentos,
   type UsuarioAutenticado,
 } from '@gincana/contracts';
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 
 import { api } from '../../lib/api.js';
 import { chaveDosLancamentos } from '../../lib/chaves-de-consulta.js';
-import { TAMANHO_DA_PAGINA, buscarPaginaDeLancamentos } from '../lancamentos/lancamentos-api.js';
+import {
+  TAMANHO_DA_PAGINA,
+  buscarPaginaDeLancamentos,
+  useInvalidarLancamentos,
+} from '../lancamentos/lancamentos-api.js';
 
 /**
  * A fila de pendentes cabe numa página: são 13 colaboradores. Pedir o máximo que a API
@@ -61,15 +65,6 @@ export function useDecididos(status: 'APROVADO' | 'RECUSADO', habilitado: boolea
       ultima.pagina < ultima.totalDePaginas ? ultima.pagina + 1 : undefined,
     enabled: habilitado,
   });
-}
-
-/**
- * Depois de decidir, a fila, o contador, as outras abas e o início do colaborador mudam:
- * invalidar a chave curta atualiza tudo sozinho, sem a tela cuidar de cada lista.
- */
-function useInvalidarLancamentos() {
-  const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: chaveDosLancamentos });
 }
 
 export function useAprovarLancamento() {

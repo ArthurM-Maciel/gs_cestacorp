@@ -1,5 +1,5 @@
-import type { ComponentType, SVGProps } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { useEffect, useRef, type ComponentType, type SVGProps } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 
 import { IconeMaos } from '../../features/acesso/Icones.js';
 import { useSessao } from '../../lib/sessao.js';
@@ -83,11 +83,11 @@ function ItemLateral({ item }: { item: ItemDoMenu }) {
 
 function ItemInferior({ item }: { item: ItemComCaminho }) {
   return (
-    <li className="flex-auto">
+    <li className="shrink-0 flex-auto">
       <NavLink
         to={item.caminho}
         className={({ isActive }) =>
-          `flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-full px-1 text-xs font-semibold ${foco} ${isActive ? 'bg-marca-300 text-marca-900' : 'text-superficie'}`
+          `flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-xs font-semibold ${foco} ${isActive ? 'bg-marca-300 text-marca-900' : 'text-superficie'}`
         }
       >
         <span className="relative">
@@ -135,6 +135,16 @@ interface Props {
  */
 export function MoldeDeNavegacao({ itens, descricaoDoPerfil }: Props) {
   const { usuario, sair } = useSessao();
+  const barraInferior = useRef<HTMLUListElement>(null);
+  const { pathname } = useLocation();
+
+  // Numa barra que rola, o item da tela atual pode estar fora da vista (ao recarregar a
+  // página, por exemplo). Traz o item para dentro, sem mexer na rolagem da página.
+  useEffect(() => {
+    barraInferior.current
+      ?.querySelector('[aria-current="page"]')
+      ?.scrollIntoView?.({ inline: 'center', block: 'nearest' });
+  }, [pathname]);
 
   // O guarda de rota já exigiu sessão; este retorno só satisfaz o tipo.
   if (usuario === null) {
@@ -205,8 +215,13 @@ export function MoldeDeNavegacao({ itens, descricaoDoPerfil }: Props) {
         className="pb-seguro fixed inset-x-0 bottom-0 z-20 px-2 lg:hidden"
       >
         {/* `flex-auto` reparte o espaço pelo tamanho do texto: "Colaboradores" é bem mais largo
-            que "Painel", e colunas iguais cortariam o rótulo em 360px. */}
-        <ul className="flex gap-0.5 rounded-full bg-marca-900 p-1 shadow-lg">
+            que "Painel", e colunas iguais cortariam o rótulo em 360px. Se os itens não cabem
+            (a administradora tem sete), a barra rola na horizontal em vez de empurrar os
+            últimos para fora da tela, onde ninguém os alcançaria. */}
+        <ul
+          ref={barraInferior}
+          className="flex gap-0.5 overflow-x-auto rounded-full bg-marca-900 p-1 shadow-lg [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           {itensQueExistem.map((item) => (
             <ItemInferior key={item.chave} item={item} />
           ))}
