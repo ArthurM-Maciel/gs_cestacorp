@@ -108,7 +108,8 @@ describe('Fila de aprovações (US08)', () => {
       expect(
         screen.getByText('Abra o comprovante antes de aprovar. Cada decisão fica no histórico.'),
       ).toBeVisible();
-      expect(await screen.findByText('Equipe Araucária')).toBeVisible();
+      // O cabeçalho mostra o nome da equipe como ele vem da API, sem prefixar "Equipe".
+      expect(await screen.findByText('Araucária')).toBeVisible();
       expect(screen.getByRole('tab', { name: 'Pendentes · 3' })).toHaveAttribute(
         'aria-selected',
         'true',
