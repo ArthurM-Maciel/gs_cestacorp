@@ -1,8 +1,9 @@
 import type { Papel, RespostaLogin } from '@gincana/contracts';
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { erroDaApi, falhaDeRede, simularApi, usuarioDeTeste } from '../../simulacao-da-api.js';
+import { rotasSemDados } from '../../simulacao-de-lancamentos.js';
 import { renderizarNaRota } from '../../utilitarios-de-teste.js';
 
 const EMAIL = 'pessoa.teste@exemplo.com.br';
@@ -225,25 +226,33 @@ describe('Tela de login', () => {
 
   describe('depois de entrar', () => {
     it.each<[Papel, string, string]>([
-      ['COLABORADOR', 'Colaborador', 'seus lançamentos'],
-      ['LIDER', 'Líder de equipe', 'fila de lançamentos'],
-      ['ADMIN', 'Administradora', 'painel da gincana'],
-    ])('leva o perfil %s à sua tela, com o nome e o papel', async (papel, rotulo, trecho) => {
-      simularApi({ 'POST /auth/login': () => ({ status: 200, dados: respostaDeLogin(papel) }) });
+      ['COLABORADOR', 'Olá, Pessoa Teste!', 'Colaborador'],
+      ['LIDER', 'Nenhuma aprovação pendente', 'Líder de equipe'],
+      ['ADMIN', 'Olá, Pessoa Teste!', 'Administradora'],
+    ])('leva o perfil %s à sua tela, com o nome e o papel', async (papel, titulo, rotulo) => {
+      simularApi({
+        'POST /auth/login': () => ({ status: 200, dados: respostaDeLogin(papel) }),
+        ...rotasSemDados(),
+      });
       renderizarNaRota('/entrar');
 
       preencher('E-mail', EMAIL);
       preencher('Senha', SENHA);
       entrar();
 
-      expect(await screen.findByRole('heading', { name: 'Olá, Pessoa Teste!' })).toBeVisible();
-      expect(screen.getByText(rotulo)).toBeVisible();
-      expect(screen.getByText(new RegExp(trecho))).toBeVisible();
+      expect(await screen.findByRole('heading', { level: 1, name: titulo })).toBeVisible();
+      // O nome e o papel ficam no menu lateral, que o computador mostra.
+      const menu = within(screen.getByRole('complementary'));
+      expect(menu.getByText('Pessoa Teste')).toBeVisible();
+      expect(menu.getByText(rotulo)).toBeVisible();
       expect(screen.queryByLabelText('E-mail')).not.toBeInTheDocument();
     });
 
     it('volta à página que a pessoa tentou abrir antes de ser mandada ao login', async () => {
-      simularApi({ 'POST /auth/login': () => ({ status: 200, dados: respostaDeLogin('LIDER') }) });
+      simularApi({
+        'POST /auth/login': () => ({ status: 200, dados: respostaDeLogin('LIDER') }),
+        ...rotasSemDados(),
+      });
       renderizarNaRota('/aprovacoes');
 
       // Sem sessão, a rota protegida manda para o login.
@@ -253,7 +262,9 @@ describe('Tela de login', () => {
       preencher('Senha', SENHA);
       entrar();
 
-      expect(await screen.findByText(/fila de lançamentos/i)).toBeVisible();
+      expect(
+        await screen.findByRole('heading', { level: 1, name: 'Nenhuma aprovação pendente' }),
+      ).toBeVisible();
     });
 
     it('entra mesmo quando o navegador bloqueia o armazenamento (janela privada)', async () => {
@@ -265,6 +276,7 @@ describe('Tela de login', () => {
       });
       simularApi({
         'POST /auth/login': () => ({ status: 200, dados: respostaDeLogin('COLABORADOR') }),
+        ...rotasSemDados(),
       });
       renderizarNaRota('/entrar');
 

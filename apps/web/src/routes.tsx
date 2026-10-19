@@ -1,5 +1,6 @@
 import { createBrowserRouter, type RouteObject } from 'react-router-dom';
 
+import { LayoutPorPapel } from './components/LayoutPorPapel.js';
 import { RotaProtegida } from './components/RotaProtegida.js';
 import { SomenteVisitante } from './components/SomenteVisitante.js';
 import { ErroInesperado, PaginaNaoEncontrada } from './components/TelasDeErroDeRota.js';
@@ -7,10 +8,14 @@ import { BoasVindas } from './features/acesso/BoasVindas.js';
 import { CriarContaEmBreve } from './features/acesso/CriarContaEmBreve.js';
 import { TelaDeLogin } from './features/acesso/TelaDeLogin.js';
 import { LayoutDaAdministradora } from './features/administracao/LayoutDaAdministradora.js';
+import { TelaDeAprovacoes } from './features/aprovacoes/TelaDeAprovacoes.js';
 import { TelaDeColaboradores } from './features/colaboradores/TelaDeColaboradores.js';
+import { LayoutDoColaborador } from './features/colaborador/LayoutDoColaborador.js';
 import { TelaDeEquipes } from './features/equipes/TelaDeEquipes.js';
 import { TelaDeGincanas } from './features/gincanas/TelaDeGincanas.js';
-import { EsqueletoDoPerfil } from './features/inicio/EsqueletoDoPerfil.js';
+import { TelaDeInicio } from './features/inicio/TelaDeInicio.js';
+import { TelaDeCorrigir } from './features/lancamentos/TelaDeCorrigir.js';
+import { TelaDeRegistrar } from './features/lancamentos/TelaDeRegistrar.js';
 import { PainelEmBreve } from './features/painel/PainelEmBreve.js';
 
 /**
@@ -33,25 +38,27 @@ export const rotas: RouteObject[] = [
         ],
       },
       {
-        element: <RotaProtegida papeis={['COLABORADOR']} />,
+        // O líder também participa da gincana: registra as próprias ações e acompanha o status.
+        element: <RotaProtegida papeis={['COLABORADOR', 'LIDER']} />,
         children: [
           {
-            path: '/inicio',
-            element: (
-              <EsqueletoDoPerfil descricao="Em breve, aqui ficam a posição da sua equipe e os seus lançamentos." />
-            ),
+            element: <LayoutDoColaborador />,
+            children: [
+              { path: '/inicio', element: <TelaDeInicio /> },
+              { path: '/registrar', element: <TelaDeRegistrar /> },
+              { path: '/registrar/:tipoAcaoId', element: <TelaDeRegistrar /> },
+              { path: '/lancamentos/:id/corrigir', element: <TelaDeCorrigir /> },
+            ],
           },
         ],
       },
       {
-        // A administradora também aprova qualquer lançamento.
+        // A administradora também aprova qualquer lançamento, dentro do menu dela.
         element: <RotaProtegida papeis={['LIDER', 'ADMIN']} />,
         children: [
           {
-            path: '/aprovacoes',
-            element: (
-              <EsqueletoDoPerfil descricao="Em breve, aqui fica a fila de lançamentos para aprovar." />
-            ),
+            element: <LayoutPorPapel />,
+            children: [{ path: '/aprovacoes', element: <TelaDeAprovacoes /> }],
           },
         ],
       },

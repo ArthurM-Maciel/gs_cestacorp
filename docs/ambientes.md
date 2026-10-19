@@ -18,6 +18,16 @@ agente de IA.
    Definir `VITE_API_URL` com a URL pública da API no Render.
 3. **Cloudinary** — criar a conta gratuita e copiar as três chaves. O segredo nunca vai
    ao navegador: a API assina o envio e o arquivo sobe direto do aparelho da pessoa.
+
+   > **Atenção antes da Sprint Review.** Sem essas três variáveis preenchidas, a API
+   > sobe normalmente, mas usa um armazenamento **falso**: a tela aceita o comprovante,
+   > o lançamento é criado e aprovado, e nenhum arquivo é guardado de verdade. Isso
+   > existe para desenvolvimento e testes rodarem sem rede e sem conta, e é exatamente
+   > o tipo de coisa que passa despercebida até alguém procurar o comprovante.
+   >
+   > Variável vazia conta como ausente. Depois de preencher no painel, registre um
+   > lançamento com foto em homologação e confira que o arquivo aparece no Cloudinary.
+
 4. **GitHub Secrets** — `RENDER_DEPLOY_HOOK` e `DATABASE_URL` de homologação, usados pelo
    job que aplica as migrations antes do deploy.
 
