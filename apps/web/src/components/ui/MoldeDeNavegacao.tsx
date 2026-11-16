@@ -28,7 +28,12 @@ const foco =
 function Marca({ compacta = false }: { compacta?: boolean }) {
   return (
     <p className="flex items-center gap-3 font-semibold">
-      <Logo tom="negativa" somenteSimbolo={compacta} variante="horizontal" className="h-7 w-auto shrink-0" />
+      <Logo
+        tom="negativa"
+        somenteSimbolo={compacta}
+        variante="horizontal"
+        className="h-7 w-auto shrink-0"
+      />
       {/* A Logo sozinha (só o símbolo) não transmite o nome do produto; o leitor de tela
           continua ouvindo "Gincana Solidária" mesmo quando o topo estreito do celular
           esconde o texto visualmente. */}
