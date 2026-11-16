@@ -19,7 +19,7 @@ afterEach(() => {
 
 describe('Layout da administradora', () => {
   describe('menu lateral', () => {
-    it('leva às telas que existem e mostra as futuras como "Em breve", sem link', async () => {
+    it('leva a todas as telas que já existem, sem nenhum item "Em breve"', async () => {
       comSessaoDeAdmin(rotasDeLeitura(semDados));
       renderizarNaRota('/painel');
       await screen.findByRole('heading', { level: 1 });
@@ -33,6 +33,9 @@ describe('Layout da administradora', () => {
         '/colaboradores',
       );
 
+      // US04: a tela de regras de pontuação também já existe.
+      expect(menu.getByRole('link', { name: 'Regras' })).toHaveAttribute('href', '/tipos-acao');
+
       // A fila de aprovações (US08) é da administradora também: ela aprova de todas as equipes.
       expect(menu.getByRole('link', { name: 'Aprovações' })).toHaveAttribute('href', '/aprovacoes');
 
@@ -40,10 +43,8 @@ describe('Layout da administradora', () => {
       expect(menu.getByRole('link', { name: 'Placar' })).toHaveAttribute('href', '/placar');
       expect(menu.getByRole('link', { name: 'Auditoria' })).toHaveAttribute('href', '/auditoria');
 
-      // Nenhum link leva a lugar nenhum: o que ainda não existe só aparece como aviso.
-      expect(menu.queryByRole('link', { name: /regras/i })).not.toBeInTheDocument();
-      expect(menu.getByText('Regras')).toBeVisible();
-      expect(menu.getAllByText('Em breve')).toHaveLength(1);
+      // Todas as telas da administradora já existem: nenhum item fica marcado como futuro.
+      expect(menu.queryByText('Em breve')).not.toBeInTheDocument();
     });
 
     it('mostra o nome da usuária e o perfil no rodapé do menu', async () => {
@@ -102,6 +103,7 @@ describe('Layout da administradora', () => {
         'Gincanas',
         'Equipes',
         'Colaboradores',
+        'Regras',
         'Aprovar',
         'Placar',
         'Auditoria',
@@ -113,7 +115,7 @@ describe('Layout da administradora', () => {
       expect(barra.queryByText('Em breve')).not.toBeInTheDocument();
     });
 
-    it('na barra que rola, traz para a vista o item da tela atual (a auditoria é o sétimo)', async () => {
+    it('na barra que rola, traz para a vista o item da tela atual (a auditoria é o oitavo)', async () => {
       // O jsdom não implementa `scrollIntoView`; o espião diz qual item foi trazido para a vista.
       const trazerParaAVista = vi.fn();
       Object.defineProperty(Element.prototype, 'scrollIntoView', {
@@ -172,10 +174,12 @@ describe('Layout da administradora', () => {
       ['COLABORADOR', '/gincanas'],
       ['COLABORADOR', '/equipes'],
       ['COLABORADOR', '/colaboradores'],
+      ['COLABORADOR', '/tipos-acao'],
       ['COLABORADOR', '/auditoria'],
       ['LIDER', '/gincanas'],
       ['LIDER', '/equipes'],
       ['LIDER', '/colaboradores'],
+      ['LIDER', '/tipos-acao'],
       ['LIDER', '/auditoria'],
     ])('%s não abre %s nem vê o menu da administradora', async (papel, caminho) => {
       gravarToken('token-de-teste');

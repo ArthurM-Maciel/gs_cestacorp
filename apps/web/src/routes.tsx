@@ -20,6 +20,7 @@ import { TelaDeDetalhe } from './features/lancamentos/TelaDeDetalhe.js';
 import { TelaDeRegistrar } from './features/lancamentos/TelaDeRegistrar.js';
 import { PainelEmBreve } from './features/painel/PainelEmBreve.js';
 import { TelaDoPlacar } from './features/placar/TelaDoPlacar.js';
+import { TelaDeTiposDeAcao } from './features/tipos-acao/TelaDeTiposDeAcao.js';
 
 /**
  * Mapa de rotas. Cada história acrescenta as suas aqui, em poucas linhas, dentro do grupo
@@ -91,6 +92,7 @@ export const rotas: RouteObject[] = [
               { path: '/gincanas', element: <TelaDeGincanas /> },
               { path: '/equipes', element: <TelaDeEquipes /> },
               { path: '/colaboradores', element: <TelaDeColaboradores /> },
+              { path: '/tipos-acao', element: <TelaDeTiposDeAcao /> },
               { path: '/auditoria', element: <TelaDeAuditoria /> },
             ],
           },

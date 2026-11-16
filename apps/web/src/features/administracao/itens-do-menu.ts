@@ -28,7 +28,7 @@ export const itensDoMenu: readonly ItemDoMenu[] = [
     Icone: IconeColaboradores,
     caminho: '/colaboradores',
   },
-  { chave: 'regras', rotulo: 'Regras', Icone: IconeRegras, caminho: null },
+  { chave: 'regras', rotulo: 'Regras', Icone: IconeRegras, caminho: '/tipos-acao' },
   {
     chave: 'aprovacoes',
     rotulo: 'Aprovações',
