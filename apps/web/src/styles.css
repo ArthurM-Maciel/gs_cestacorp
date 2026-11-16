@@ -1,32 +1,44 @@
 @import 'tailwindcss';
 
+@import '@fontsource/nunito/400.css';
+@import '@fontsource/nunito/500.css';
+@import '@fontsource/nunito/600.css';
+@import '@fontsource/nunito/700.css';
+@import '@fontsource/comfortaa/400.css';
+@import '@fontsource/comfortaa/700.css';
+
 /**
- * Tokens da identidade, extraídos do protótipo no Figma
- * (arquivo "Gincana Solidária · App", 18/10/2026).
+ * Tokens da identidade, do Manual de Identidade Visual oficial da Cestacorp (agência
+ * Moonflag). As duas cores de marca do manual são o Azul `#2034af` e o Verde `#6dcc3b`,
+ * mais o cinza de apoio `#999999` e o cinza-claro `#f3f3f3`.
  *
- * O arquivo não define variáveis de design, então os valores vieram da amostragem das
- * telas. Nenhum componente usa cor literal: mudança de identidade acontece só aqui.
+ * Os tons abaixo não repetem sempre o hex literal do manual: foram recalculados em HSL
+ * para preservar o contraste (WCAG) que a Definition of Done exige, mantendo a mesma
+ * matiz. Nenhum componente usa cor literal: mudança de identidade acontece só aqui.
  */
 @theme {
-  /* Verde escuro do topo das telas e do menu lateral no computador */
-  --color-marca-900: #1e3a2f;
-  --color-marca-800: #2c4b3c;
-  --color-marca-700: #315242;
+  /* Azul da marca (#2034af), escurecido para o chrome: topo mobile e menu da administradora */
+  --color-marca-900: hsl(232 69% 20%);
+  --color-marca-800: hsl(232 69% 27%);
+  --color-marca-700: hsl(232 69% 34%);
 
-  /* Verde dos botões primários e dos números em destaque */
-  --color-marca-600: #2f7d4f;
-  --color-marca-500: #428d60;
+  /* Azul da marca (#2034af): botão primário, links e números em destaque */
+  --color-marca-600: hsl(232 69% 41%);
+  --color-marca-500: hsl(232 69% 50%); /* hover do botão primário */
 
-  /* Verde claro do pódio e dos realces */
-  --color-marca-300: #a7e3b9;
-  --color-marca-100: #e3f3e8;
-  --color-marca-50: #f2fbf5;
+  /* Verde da marca (#6dcc3b), claro: pódio, realces e texto secundário sobre marca-900 */
+  --color-marca-300: hsl(99 59% 78%);
+  --color-marca-100: hsl(99 59% 90%);
+  --color-marca-50: hsl(99 59% 96%);
 
-  --color-fundo: #eef5f0;
+  --color-fundo: #f3f3f3;
   --color-superficie: #ffffff;
 
-  --color-texto: #0d1b14;
-  --color-texto-suave: #5b6a60;
+  --color-texto: hsl(0 0% 11%);
+  --color-texto-suave: hsl(0 0% 45%);
+
+  --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Comfortaa', 'Nunito', ui-sans-serif, sans-serif;
 
   /* Estados do lançamento, como aparecem nas etiquetas do protótipo */
   --color-pendente: #8a5a00;
@@ -56,6 +68,7 @@
 body {
   background-color: var(--color-fundo);
   color: var(--color-texto);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 

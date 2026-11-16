@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 
+import { Logo } from '../../components/ui/Logo.js';
 import { botaoContorno, botaoPrimario } from '../../components/ui/estilos-de-botao.js';
-import { IconeMaos } from './Icones.js';
 import { PainelDaMarca } from './PainelDaMarca.js';
 
 /**
@@ -30,7 +30,7 @@ export function BoasVindas() {
           className="absolute bottom-16 left-10 size-4 rounded-full bg-superficie/20"
         />
         <span className="relative grid size-36 place-items-center rounded-4xl bg-marca-900 text-superficie">
-          <IconeMaos className="size-24" />
+          <Logo somenteSimbolo tom="negativa" className="h-24 w-auto" />
         </span>
       </div>
 
@@ -38,7 +38,7 @@ export function BoasVindas() {
 
       <main className="pb-seguro rounded-t-4xl bg-superficie px-6 pt-8 lg:flex lg:flex-col lg:justify-center lg:rounded-none lg:px-12">
         <div className="mx-auto w-full max-w-md text-center lg:max-w-sm lg:text-left">
-          <h1 className="text-3xl leading-tight font-bold tracking-tight">
+          <h1 className="font-display text-3xl leading-tight font-bold tracking-tight">
             Faça o bem e <span className="block text-marca-600">some pontos!</span>
           </h1>
           <p className="mt-3 text-texto-suave">

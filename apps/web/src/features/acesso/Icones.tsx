@@ -66,29 +66,3 @@ export function IconeConfirmar(props: Props) {
     </svg>
   );
 }
-
-/** Marca do app: duas mãos em concha com um coração no meio. */
-export function IconeMaos(props: Props) {
-  return (
-    <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" {...props}>
-      <g fill="currentColor">
-        <g transform="translate(-0.5 0) rotate(-12 17 34)">
-          <rect x="6.5" y="24" width="16" height="17" rx="7" />
-          <rect x="7" y="12" width="4.2" height="17" rx="2.1" />
-          <rect x="12" y="8.5" width="4.2" height="20" rx="2.1" />
-          <rect x="17" y="10.5" width="4.2" height="18" rx="2.1" />
-        </g>
-        <g transform="translate(48 0) scale(-1 1) translate(-0.5 0) rotate(-12 17 34)">
-          <rect x="6.5" y="24" width="16" height="17" rx="7" />
-          <rect x="7" y="12" width="4.2" height="17" rx="2.1" />
-          <rect x="12" y="8.5" width="4.2" height="20" rx="2.1" />
-          <rect x="17" y="10.5" width="4.2" height="18" rx="2.1" />
-        </g>
-      </g>
-      <path
-        d="M24 33.5c-4.2-3-5.4-5.6-5.4-7.4a3.1 3.1 0 0 1 5.4-2 3.1 3.1 0 0 1 5.4 2c0 1.8-1.2 4.4-5.4 7.4Z"
-        className="fill-marca-300"
-      />
-    </svg>
-  );
-}

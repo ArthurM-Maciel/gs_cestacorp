@@ -1,8 +1,8 @@
 import { useEffect, useRef, type ComponentType, type SVGProps } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 
-import { IconeMaos } from '../../features/acesso/Icones.js';
 import { useSessao } from '../../lib/sessao.js';
+import { Logo } from './Logo.js';
 
 export interface ItemDoMenu {
   chave: string;
@@ -28,10 +28,11 @@ const foco =
 function Marca({ compacta = false }: { compacta?: boolean }) {
   return (
     <p className="flex items-center gap-3 font-semibold">
-      <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-marca-600">
-        <IconeMaos className="size-5 text-superficie" />
-      </span>
-      <span className={compacta ? 'sr-only' : undefined}>Gincana Solidária</span>
+      <Logo tom="negativa" somenteSimbolo={compacta} variante="horizontal" className="h-7 w-auto shrink-0" />
+      {/* A Logo sozinha (só o símbolo) não transmite o nome do produto; o leitor de tela
+          continua ouvindo "Gincana Solidária" mesmo quando o topo estreito do celular
+          esconde o texto visualmente. */}
+      {compacta && <span className="sr-only">Gincana Solidária</span>}
     </p>
   );
 }

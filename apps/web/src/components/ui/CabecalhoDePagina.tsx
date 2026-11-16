@@ -16,7 +16,7 @@ export function CabecalhoDePagina({ sobretitulo, titulo, descricao, acao }: Prop
         <p className="text-xs font-semibold tracking-wide text-marca-600 uppercase">
           {sobretitulo}
         </p>
-        <h1 className="mt-1 text-3xl leading-tight font-bold tracking-tight text-balance">
+        <h1 className="font-display mt-1 text-3xl leading-tight font-bold tracking-tight text-balance">
           {titulo}
         </h1>
         {descricao !== undefined && <p className="mt-1 text-texto-suave">{descricao}</p>}

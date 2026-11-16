@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
-import { IconeMaos, IconeSetaEsquerda } from './Icones.js';
+import { Logo } from '../../components/ui/Logo.js';
+import { IconeSetaEsquerda } from './Icones.js';
 import { PainelDaMarca } from './PainelDaMarca.js';
 
 interface Props {
@@ -28,7 +29,7 @@ export function LayoutDeAcesso({ voltarPara, children }: Props) {
             <IconeSetaEsquerda className="size-6" />
           </Link>
           <span className="grid size-14 place-items-center rounded-2xl bg-marca-600 text-superficie">
-            <IconeMaos className="size-9" />
+            <Logo somenteSimbolo tom="negativa" className="h-9 w-auto" />
           </span>
         </div>
         {children}
