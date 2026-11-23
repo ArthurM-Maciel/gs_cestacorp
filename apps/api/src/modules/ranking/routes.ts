@@ -3,7 +3,7 @@ import { idSchema, periodoDoRankingQuerySchema } from '@gincana/contracts';
 import { Router } from 'express';
 import { z } from 'zod';
 
-import { autenticacao } from '../../middlewares/auth.js';
+import { autenticacao, usuarioDaRequisicao } from '../../middlewares/auth.js';
 import { consultaValidada, parametrosValidados, validar } from '../../middlewares/validar.js';
 
 import { montarExtratoDaEquipe, montarRanking } from './service.js';
@@ -18,6 +18,9 @@ const parametroEquipe = z.object({ gincanaId: idSchema, equipeId: idSchema });
  *
  * Só `autenticacao`, sem `exigePapel`: o placar é da gincana inteira e o protótipo o
  * mostra a todos os perfis. Não há dado de outra pessoa aqui — são totais por equipe.
+ *
+ * Quando o placar está oculto, quem decide é o estado da gincana, não o papel — por isso a
+ * regra mora na `policy.ts` do módulo, chamada pelo serviço, e não num `exigePapel` aqui.
  */
 rankingRouter.get<{ gincanaId: string }, Ranking>(
   '/gincanas/:gincanaId/ranking',
@@ -26,7 +29,7 @@ rankingRouter.get<{ gincanaId: string }, Ranking>(
   async (req, res) => {
     const { gincanaId } = parametrosValidados(req, parametroGincana);
     const periodo: PeriodoDoRankingQuery = consultaValidada(req, periodoDoRankingQuerySchema);
-    res.status(200).json(await montarRanking(gincanaId, periodo));
+    res.status(200).json(await montarRanking(usuarioDaRequisicao(req), gincanaId, periodo));
   },
 );
 
@@ -38,6 +41,8 @@ rankingRouter.get<{ gincanaId: string; equipeId: string }, ExtratoDaEquipe>(
   async (req, res) => {
     const { gincanaId, equipeId } = parametrosValidados(req, parametroEquipe);
     const periodo: PeriodoDoRankingQuery = consultaValidada(req, periodoDoRankingQuerySchema);
-    res.status(200).json(await montarExtratoDaEquipe(gincanaId, equipeId, periodo));
+    res
+      .status(200)
+      .json(await montarExtratoDaEquipe(usuarioDaRequisicao(req), gincanaId, equipeId, periodo));
   },
 );

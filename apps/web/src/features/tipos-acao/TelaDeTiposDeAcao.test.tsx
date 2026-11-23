@@ -3,13 +3,14 @@ import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import type { InternalAxiosRequestConfig } from 'axios';
 import { describe, expect, it, vi } from 'vitest';
 
-import { comSessaoDeAdmin } from '../../simulacao-do-cadastro.js';
+import { comSessaoDe } from '../../simulacao-de-lancamentos.js';
 import { erroDaApi } from '../../simulacao-da-api.js';
 import {
   cenarioDeTiposDeAcao as cenario,
   rotasDeTiposDeAcao,
   umTipoDeAcao,
 } from '../../simulacao-de-tipos-acao.js';
+import { comSessaoDeAdmin } from '../../simulacao-do-cadastro.js';
 import { renderizarNaRota } from '../../utilitarios-de-teste.js';
 
 function corpoDa(chamada: ReturnType<typeof vi.fn>, indice = 0): unknown {
@@ -363,6 +364,68 @@ describe('Tipos de ação (US04)', () => {
       // O campo em si não é marcado como inválido: a recusa é uma decisão de negócio, não
       // um erro de preenchimento.
       expect(within(dialogo).getByLabelText('Pontos por unidade')).toBeValid();
+    });
+  });
+
+  describe('líder', () => {
+    it('não vê "+ Novo tipo de ação" nem "Nova pontuação", mas pausa um tipo ativo', async () => {
+      const { estado, alimentos } = cenario();
+      const atualizar = vi.fn((requisicao: InternalAxiosRequestConfig) => {
+        const { ativo } = JSON.parse(String(requisicao.data)) as { ativo: boolean };
+        const atualizado: TipoAcao = { ...alimentos, ativo };
+        estado.tipos[0] = atualizado;
+        return { status: 200, dados: { ...atualizado, regras: [atualizado.regraVigente] } };
+      });
+      comSessaoDe('LIDER', {
+        ...rotasDeTiposDeAcao(estado),
+        [`PATCH /tipos-acao/${alimentos.id}`]: atualizar,
+      });
+
+      await abrirTiposDeAcao();
+
+      expect(screen.queryByRole('button', { name: '+ Novo tipo de ação' })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: `Nova pontuação de ${alimentos.nome}` }),
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(
+        screen.getByRole('button', { name: `Ver situação do tipo de ação ${alimentos.nome}` }),
+      );
+      const dialogo = await screen.findByRole('dialog', {
+        name: `Editar tipo de ação ${alimentos.nome}`,
+      });
+
+      // Identidade desabilitada, não oculta: o líder precisa ver o que está pausando.
+      expect(within(dialogo).getByLabelText('Nome da ação')).toBeDisabled();
+      expect(within(dialogo).getByLabelText('Descrição (opcional)')).toBeDisabled();
+      expect(within(dialogo).getByRole('checkbox', { name: /exige comprovante/i })).toBeDisabled();
+      expect(within(dialogo).queryByRole('button', { name: 'Salvar' })).not.toBeInTheDocument();
+      expect(within(dialogo).queryByRole('button', { name: 'Cancelar' })).not.toBeInTheDocument();
+
+      fireEvent.click(within(dialogo).getByRole('button', { name: 'Pausar tipo de ação' }));
+
+      expect(await screen.findByRole('status')).toHaveTextContent(
+        `O tipo de ação "${alimentos.nome}" foi pausado`,
+      );
+      expect(corpoDa(atualizar)).toEqual({ ativo: false });
+      // A ação conclui e fecha o diálogo sozinha, sem precisar do botão "Fechar".
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      const tabela = screen.getByRole('table', { name: 'Tipos de ação da gincana' });
+      await waitFor(() => {
+        const linha = within(tabela)
+          .getAllByRole('row')
+          .find((row) => row.textContent?.includes(alimentos.nome));
+        expect(linha).toHaveTextContent('Pausada');
+      });
+    });
+
+    it('a administradora segue vendo "+ Novo tipo de ação" e "Nova pontuação"', async () => {
+      const { estado } = cenario();
+      comSessaoDeAdmin(rotasDeTiposDeAcao(estado));
+
+      await abrirTiposDeAcao();
+
+      expect(screen.getByRole('button', { name: '+ Novo tipo de ação' })).toBeVisible();
     });
   });
 });

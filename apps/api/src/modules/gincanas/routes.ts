@@ -3,7 +3,7 @@ import { atualizarGincanaSchema, criarGincanaSchema, idSchema } from '@gincana/c
 import { Router } from 'express';
 import { z } from 'zod';
 
-import { autenticacao, exigePapel } from '../../middlewares/auth.js';
+import { autenticacao, exigePapel, usuarioDaRequisicao } from '../../middlewares/auth.js';
 import { parametrosValidados, validar } from '../../middlewares/validar.js';
 
 import { atualizarGincana, buscarGincana, criarGincana, listarGincanas } from './service.js';
@@ -42,13 +42,19 @@ gincanasRouter.get(
   },
 );
 
+/**
+ * O papel abre a porta para a administradora e para o líder; quais campos do corpo cada um
+ * pode mexer é decisão da `policy.ts`, conferida no serviço. O líder entra aqui só para
+ * ocultar ou mostrar o placar.
+ */
 gincanasRouter.patch<Record<string, string>, Gincana, AtualizarGincana>(
   '/gincanas/:id',
   autenticacao,
-  exigePapel('ADMIN'),
+  exigePapel('ADMIN', 'LIDER'),
   validar({ params: parametroId, body: atualizarGincanaSchema }),
   async (req, res) => {
     const { id } = parametrosValidados(req, parametroId);
-    res.status(200).json(await atualizarGincana(id, req.body));
+    const autor = usuarioDaRequisicao(req);
+    res.status(200).json(await atualizarGincana(autor, id, req.body, autor.id));
   },
 );

@@ -10,6 +10,7 @@ import { Etiqueta } from '../../components/ui/Etiqueta.js';
 import { ListaResponsiva, type ColunaDaLista } from '../../components/ui/ListaResponsiva.js';
 import { mensagemDeErro } from '../../lib/api.js';
 import { formatarPontos } from '../../lib/formatar-numero.js';
+import { useSessao } from '../../lib/sessao.js';
 import { SeletorDeGincana } from '../gincanas/SeletorDeGincana.js';
 import { useGincanaSelecionada } from '../gincanas/useGincanaSelecionada.js';
 import { DialogoDeNovaRegra } from './DialogoDeNovaRegra.js';
@@ -29,6 +30,11 @@ type DialogoAberto =
  * duas operações diferentes para a API.
  */
 export function TelaDeTiposDeAcao() {
+  const { usuario } = useSessao();
+  const ehAdmin = usuario?.papel === 'ADMIN';
+  // O líder só pausa/reativa: criar tipo de ação e abrir nova pontuação continuam
+  // exclusivos da administradora.
+  const ehLider = usuario?.papel === 'LIDER';
   const { consulta: consultaDeGincanas, gincanas, escolhida, escolher } = useGincanaSelecionada();
   const consulta = useTiposDeAcao(escolhida?.id ?? null);
   const [dialogo, setDialogo] = useState<DialogoAberto | null>(null);
@@ -85,29 +91,39 @@ export function TelaDeTiposDeAcao() {
       titulo: 'Ações',
       acoes: true,
       renderizar: (item) => (
-        <div className="grid grid-cols-2 gap-2 lg:flex lg:justify-end lg:gap-1">
+        <div
+          className={`grid gap-2 lg:flex lg:justify-end lg:gap-1 ${
+            ehLider ? 'grid-cols-1' : 'grid-cols-2'
+          }`}
+        >
           <button
             type="button"
-            aria-label={`Editar tipo de ação ${item.nome}`}
+            aria-label={
+              ehLider
+                ? `Ver situação do tipo de ação ${item.nome}`
+                : `Editar tipo de ação ${item.nome}`
+            }
             onClick={() => {
               setSucesso(null);
               setDialogo({ tipo: 'editar', id: item.id });
             }}
             className={`${botaoDeLinha} w-full lg:w-auto`}
           >
-            Editar
+            {ehLider ? 'Situação' : 'Editar'}
           </button>
-          <button
-            type="button"
-            aria-label={`Nova pontuação de ${item.nome}`}
-            onClick={() => {
-              setSucesso(null);
-              setDialogo({ tipo: 'nova-pontuacao', id: item.id });
-            }}
-            className={`${botaoDeLinha} w-full lg:w-auto`}
-          >
-            Nova pontuação
-          </button>
+          {!ehLider && (
+            <button
+              type="button"
+              aria-label={`Nova pontuação de ${item.nome}`}
+              onClick={() => {
+                setSucesso(null);
+                setDialogo({ tipo: 'nova-pontuacao', id: item.id });
+              }}
+              className={`${botaoDeLinha} w-full lg:w-auto`}
+            >
+              Nova pontuação
+            </button>
+          )}
         </div>
       ),
     },
@@ -141,7 +157,7 @@ export function TelaDeTiposDeAcao() {
         titulo="Regras de pontuação"
         descricao={descricao}
         acao={
-          escolhida === null ? undefined : (
+          escolhida === null || ehLider ? undefined : (
             <button type="button" onClick={abrirNovo} className={`${botaoPrimario} lg:w-auto`}>
               + Novo tipo de ação
             </button>
@@ -179,9 +195,11 @@ export function TelaDeTiposDeAcao() {
           titulo="Cadastre a gincana antes dos tipos de ação"
           descricao="Os tipos de ação pertencem a uma gincana. Cadastre a gincana do ano e volte aqui para criar o primeiro."
         >
-          <Link to="/gincanas" className={botaoPrimario}>
-            Ir para Gincanas
-          </Link>
+          {ehAdmin && (
+            <Link to="/gincanas" className={botaoPrimario}>
+              Ir para Gincanas
+            </Link>
+          )}
         </EstadoVazio>
       )}
 
@@ -201,11 +219,17 @@ export function TelaDeTiposDeAcao() {
       {escolhida !== null && consulta.isSuccess && tipos.length === 0 && (
         <EstadoVazio
           titulo="Nenhum tipo de ação ainda"
-          descricao={`Cadastre o primeiro tipo de ação da gincana ${escolhida.ano}, com a regra de pontos que ele vale. Uma atividade extra criada no meio da gincana é só mais um tipo de ação.`}
+          descricao={
+            ehLider
+              ? `A administradora ainda não cadastrou um tipo de ação na gincana ${escolhida.ano}.`
+              : `Cadastre o primeiro tipo de ação da gincana ${escolhida.ano}, com a regra de pontos que ele vale. Uma atividade extra criada no meio da gincana é só mais um tipo de ação.`
+          }
         >
-          <button type="button" onClick={abrirNovo} className={botaoPrimario}>
-            Criar o primeiro tipo de ação
-          </button>
+          {ehLider ? undefined : (
+            <button type="button" onClick={abrirNovo} className={botaoPrimario}>
+              Criar o primeiro tipo de ação
+            </button>
+          )}
         </EstadoVazio>
       )}
 

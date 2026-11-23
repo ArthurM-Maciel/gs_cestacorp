@@ -111,8 +111,16 @@ describe('Gincanas (US02)', () => {
     it('cadastra a gincana, fecha o formulário, confirma e atualiza a lista sozinha', async () => {
       const estado = { gincanas: [umaGincana()], equipes: [], colaboradores: [] };
       const criar = vi.fn((requisicao: InternalAxiosRequestConfig) => {
-        const dados = JSON.parse(String(requisicao.data)) as Omit<Gincana, 'id' | 'status'>;
-        estado.gincanas.unshift({ id: novoId(), status: 'PLANEJADA', ...dados });
+        const dados = JSON.parse(String(requisicao.data)) as Omit<
+          Gincana,
+          'id' | 'status' | 'placarVisivel'
+        >;
+        estado.gincanas.unshift({
+          id: novoId(),
+          status: 'PLANEJADA',
+          placarVisivel: true,
+          ...dados,
+        });
         return { status: 201, dados: estado.gincanas[0] };
       });
       comSessaoDeAdmin({ ...rotasDeLeitura(estado), 'POST /gincanas': criar });

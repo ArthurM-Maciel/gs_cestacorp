@@ -26,6 +26,7 @@ export function umaGincana(sobrepor: Partial<Gincana> = {}): Gincana {
     dataInicio: '2026-10-28',
     dataFim: '2026-11-19',
     status: 'ATIVA',
+    placarVisivel: true,
     ...sobrepor,
   };
 }

@@ -256,7 +256,12 @@ describe('US04 — tipos de ação e a troca de pontuação', () => {
       orderBy: { vigenciaInicio: 'asc' },
     });
 
-    const pausado = await atualizarTipoAcao(tipo.id, { ativo: false }, marieri.id);
+    const pausado = await atualizarTipoAcao(
+      comoAdministradora,
+      tipo.id,
+      { ativo: false },
+      marieri.id,
+    );
     expect(pausado.ativo).toBe(false);
     expect(pausado.regras).toHaveLength(2);
     expect(pausado.regraVigente?.pontosPorUnidade).toBe(9);
@@ -282,7 +287,12 @@ describe('US04 — tipos de ação e a troca de pontuação', () => {
     expect(retrato(aoPausar?.valoresAntes).ativo).toBe(true);
     expect(retrato(aoPausar?.valoresDepois).ativo).toBe(false);
 
-    const reativado = await atualizarTipoAcao(tipo.id, { ativo: true }, marieri.id);
+    const reativado = await atualizarTipoAcao(
+      comoAdministradora,
+      tipo.id,
+      { ativo: true },
+      marieri.id,
+    );
     expect(reativado.ativo).toBe(true);
 
     const aoReativar = await prisma.registroAuditoria.findMany({

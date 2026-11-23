@@ -12,11 +12,11 @@ import type {
 import { selecionarRegraVigente, type RegraPontuacao as RegraParaCalculo } from '@gincana/scoring';
 
 import { prisma, type Transacao } from '../../db.js';
-import { conflito, naoEncontrado } from '../../middlewares/erros.js';
+import { conflito, naoEncontrado, semPermissao } from '../../middlewares/erros.js';
 import { comUnicidade } from '../../prisma-erros.js';
 import { registrarAuditoria } from '../auditoria/registrar.js';
 
-import { escopoDaListaDeTiposAcao, escopoDoTipoAcao } from './policy.js';
+import { escopoDaListaDeTiposAcao, escopoDoTipoAcao, podeAtualizarTipoAcao } from './policy.js';
 
 /**
  * US04 — a administradora cadastra tipos de ação com a regra de pontos.
@@ -306,17 +306,31 @@ export async function buscarTipoAcao(
   return montarTipoComHistorico(tipo, new Date());
 }
 
+const soPausaOuReativa = () =>
+  semPermissao(
+    'Como líder de equipe você pode pausar ou reativar um tipo de ação, mas não alterar o ' +
+      'nome, a descrição ou a exigência de comprovante. Peça essa alteração à administradora.',
+  );
+
 /**
  * Altera a identidade do tipo de ação — nunca o preço dele.
  *
  * Pausar (`ativo: false`) não apaga nem altera uma linha do histórico: o tipo some do
  * formulário de quem registra ação e continua valendo para tudo que já foi lançado.
+ *
+ * A autorização por campo é conferida **antes** de abrir a transação: o líder só chega ao
+ * banco se o corpo trouxer exclusivamente `ativo`.
  */
 export async function atualizarTipoAcao(
+  usuario: UsuarioAutenticado,
   id: string,
   dados: AtualizarTipoAcao,
   autorId: string,
 ): Promise<TipoAcaoComHistorico> {
+  if (!podeAtualizarTipoAcao(usuario, dados)) {
+    throw soPausaOuReativa();
+  }
+
   const agora = new Date();
 
   return prisma.$transaction(async (tx) => {

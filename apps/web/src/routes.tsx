@@ -72,12 +72,17 @@ export const rotas: RouteObject[] = [
         ],
       },
       {
-        // A administradora também aprova qualquer lançamento, dentro do menu dela.
+        // A administradora também aprova qualquer lançamento, dentro do menu dela. O líder
+        // também pausa/reativa tipo de ação e oculta o placar, mas não cadastra identidade
+        // nem cria pontuação nova — isso continua exclusivo da administradora.
         element: <RotaProtegida papeis={['LIDER', 'ADMIN']} />,
         children: [
           {
             element: <LayoutPorPapel />,
-            children: [{ path: '/aprovacoes', element: <TelaDeAprovacoes /> }],
+            children: [
+              { path: '/aprovacoes', element: <TelaDeAprovacoes /> },
+              { path: '/tipos-acao', element: <TelaDeTiposDeAcao /> },
+            ],
           },
         ],
       },
@@ -92,7 +97,6 @@ export const rotas: RouteObject[] = [
               { path: '/gincanas', element: <TelaDeGincanas /> },
               { path: '/equipes', element: <TelaDeEquipes /> },
               { path: '/colaboradores', element: <TelaDeColaboradores /> },
-              { path: '/tipos-acao', element: <TelaDeTiposDeAcao /> },
               { path: '/auditoria', element: <TelaDeAuditoria /> },
             ],
           },

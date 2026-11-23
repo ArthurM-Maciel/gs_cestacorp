@@ -107,10 +107,11 @@ describe('Layout do colaborador e do líder', () => {
         'href',
         '/aprovacoes',
       );
-      expect(barra.getAllByRole('link')).toHaveLength(4);
+      expect(barra.getAllByRole('link')).toHaveLength(5);
       expect(barra.getAllByRole('link')[0]).toHaveAccessibleName('Início');
       expect(barra.getAllByRole('link')[2]).toHaveAccessibleName('Registrar');
       expect(barra.getAllByRole('link')[3]).toHaveAccessibleName('Placar');
+      expect(barra.getAllByRole('link')[4]).toHaveAccessibleName('Regras');
     });
 
     it('não conta como aprovação o lançamento da própria pessoa', async () => {
@@ -129,7 +130,7 @@ describe('Layout do colaborador e do líder', () => {
       ).toBeVisible();
     });
 
-    it('lista Aprovações, Registrar ação e Placar no menu lateral', async () => {
+    it('lista Aprovações, Registrar ação, Placar e Regras no menu lateral', async () => {
       const { estado } = cenarioDeLancamentos();
       comSessaoDe('LIDER', rotasDeLancamentos(estado));
 
@@ -142,6 +143,7 @@ describe('Layout do colaborador e do líder', () => {
         'Aprovações',
         'Registrar ação',
         'Placar',
+        'Regras',
       ]);
       expect(menu.queryByText('Em breve')).not.toBeInTheDocument();
       expect(

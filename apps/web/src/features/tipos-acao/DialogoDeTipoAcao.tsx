@@ -19,6 +19,7 @@ import {
   focarPrimeiroComErro,
   traduzirErroDoFormulario,
 } from '../../lib/erro-da-api.js';
+import { useSessao } from '../../lib/sessao.js';
 import { useAtualizarTipoAcao, useCriarTipoAcao } from './tipos-acao-api.js';
 
 const CAMPOS = ['nome', 'descricao', 'unidade', 'pontosPorUnidade'] as const;
@@ -49,6 +50,11 @@ interface Props {
  */
 export function DialogoDeTipoAcao({ gincanaId, tipo, aoFechar, aoConcluir }: Props) {
   const editando = tipo !== undefined;
+  const { usuario } = useSessao();
+  // O líder só pausa/reativa: a identidade do tipo (nome, descrição, exigência de
+  // comprovante) continua exclusiva da administradora. Os campos ficam desabilitados, não
+  // ocultos — o líder precisa ver o que está pausando.
+  const ehLider = usuario?.papel === 'LIDER';
 
   const [nome, setNome] = useState(tipo?.nome ?? '');
   const [descricao, setDescricao] = useState(tipo?.descricao ?? '');
@@ -197,7 +203,8 @@ export function DialogoDeTipoAcao({ gincanaId, tipo, aoFechar, aoConcluir }: Pro
               limpar('nome');
             }}
             erro={erros.nome}
-            data-foco-inicial
+            disabled={ehLider}
+            {...(ehLider ? {} : { 'data-foco-inicial': true })}
           />
 
           <AreaDeTexto
@@ -210,6 +217,7 @@ export function DialogoDeTipoAcao({ gincanaId, tipo, aoFechar, aoConcluir }: Pro
               limpar('descricao');
             }}
             erro={erros.descricao}
+            disabled={ehLider}
           />
 
           {!editando && (
@@ -238,6 +246,7 @@ export function DialogoDeTipoAcao({ gincanaId, tipo, aoFechar, aoConcluir }: Pro
               onChange={(evento) => {
                 setExigeEvidencia(evento.target.checked);
               }}
+              disabled={ehLider}
               className="size-5 shrink-0 accent-marca-600"
             />
             <span className="min-w-0">
@@ -286,6 +295,7 @@ export function DialogoDeTipoAcao({ gincanaId, tipo, aoFechar, aoConcluir }: Pro
                         void alternarSituacao(false);
                       }}
                       className={botaoContorno}
+                      {...(ehLider ? { 'data-foco-inicial': true } : {})}
                     >
                       Pausar tipo de ação
                     </button>
@@ -304,6 +314,7 @@ export function DialogoDeTipoAcao({ gincanaId, tipo, aoFechar, aoConcluir }: Pro
                         void alternarSituacao(true);
                       }}
                       className={botaoContorno}
+                      {...(ehLider ? { 'data-foco-inicial': true } : {})}
                     >
                       Reativar tipo de ação
                     </button>
@@ -320,12 +331,32 @@ export function DialogoDeTipoAcao({ gincanaId, tipo, aoFechar, aoConcluir }: Pro
         </CorpoDoDialogo>
 
         <RodapeDoDialogo>
-          <button type="button" disabled={pendente} onClick={aoFechar} className={botaoContorno}>
-            Cancelar
-          </button>
-          <button type="submit" disabled={pendente} className={botaoPrimario}>
-            {pendente ? 'Salvando…' : editando ? 'Salvar' : 'Criar tipo de ação'}
-          </button>
+          {ehLider ? (
+            // O líder só pausa/reativa, pelo botão de cima (`onClick` direto). Não há nada
+            // para submeter aqui, então o rodapé mostra só "Fechar".
+            <button
+              type="button"
+              disabled={pendente}
+              onClick={aoFechar}
+              className={`${botaoPrimario} col-span-2`}
+            >
+              Fechar
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                disabled={pendente}
+                onClick={aoFechar}
+                className={botaoContorno}
+              >
+                Cancelar
+              </button>
+              <button type="submit" disabled={pendente} className={botaoPrimario}>
+                {pendente ? 'Salvando…' : editando ? 'Salvar' : 'Criar tipo de ação'}
+              </button>
+            </>
+          )}
         </RodapeDoDialogo>
       </form>
     </Dialogo>

@@ -2,6 +2,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { criarApp } from '../../app.js';
+import { prisma } from '../../db.js';
 import {
   criarCenarioDeCadastro,
   type CenarioDeCadastro,
@@ -244,6 +245,137 @@ describe('US02 — cadastro da gincana do ano', () => {
 
       expect(resposta.status).toBe(400);
       expect(resposta.body.erro.codigo).toBe('DADOS_INVALIDOS');
+    });
+  });
+
+  describe('PATCH /gincanas/:id — o interruptor do placar', () => {
+    it('a gincana nasce com o placar visível', async () => {
+      const gincana = await cenario.criarGincana();
+
+      const resposta = await request(app)
+        .get(`/gincanas/${gincana.id}`)
+        .set('Authorization', `Bearer ${colaborador.token}`);
+
+      expect(resposta.body.placarVisivel).toBe(true);
+    });
+
+    it('o líder oculta o placar e a auditoria registra autor, antes e depois', async () => {
+      const gincana = await cenario.criarGincana();
+
+      const resposta = await request(app)
+        .patch(`/gincanas/${gincana.id}`)
+        .set('Authorization', `Bearer ${lider.token}`)
+        .send({ placarVisivel: false });
+
+      expect(resposta.status).toBe(200);
+      expect(resposta.body.placarVisivel).toBe(false);
+
+      const guardada = await prisma.gincana.findUniqueOrThrow({ where: { id: gincana.id } });
+      expect(guardada.placarVisivel).toBe(false);
+
+      const auditoria = await prisma.registroAuditoria.findFirst({
+        where: { entidade: 'Gincana', entidadeId: gincana.id, acao: 'ALTERACAO' },
+        orderBy: { criadoEm: 'desc' },
+      });
+      expect(auditoria?.autorId).toBe(lider.id);
+      expect(auditoria?.valoresAntes).toEqual({ placarVisivel: true });
+      expect(auditoria?.valoresDepois).toEqual({ placarVisivel: false });
+
+      // E mostra de novo: a permissão vale para os dois sentidos do interruptor.
+      const volta = await request(app)
+        .patch(`/gincanas/${gincana.id}`)
+        .set('Authorization', `Bearer ${lider.token}`)
+        .send({ placarVisivel: true });
+
+      expect(volta.status).toBe(200);
+      expect(volta.body.placarVisivel).toBe(true);
+      expect(
+        await prisma.registroAuditoria.count({
+          where: { entidade: 'Gincana', entidadeId: gincana.id, acao: 'ALTERACAO' },
+        }),
+      ).toBe(2);
+    });
+
+    it('a administradora também oculta o placar, com rastro', async () => {
+      const gincana = await cenario.criarGincana();
+
+      const resposta = await request(app)
+        .patch(`/gincanas/${gincana.id}`)
+        .set('Authorization', `Bearer ${administradora.token}`)
+        .send({ placarVisivel: false });
+
+      expect(resposta.status).toBe(200);
+      expect(resposta.body.placarVisivel).toBe(false);
+
+      const auditoria = await prisma.registroAuditoria.findFirst({
+        where: { entidade: 'Gincana', entidadeId: gincana.id, acao: 'ALTERACAO' },
+      });
+      expect(auditoria?.autorId).toBe(administradora.id);
+    });
+
+    it('mandar o mesmo valor não suja a trilha com linha vazia', async () => {
+      const gincana = await cenario.criarGincana();
+
+      await request(app)
+        .patch(`/gincanas/${gincana.id}`)
+        .set('Authorization', `Bearer ${lider.token}`)
+        .send({ placarVisivel: true })
+        .expect(200);
+
+      expect(
+        await prisma.registroAuditoria.count({
+          where: { entidade: 'Gincana', entidadeId: gincana.id },
+        }),
+      ).toBe(0);
+    });
+
+    it('o líder não muda nome, situação nem período: 403 e nada muda no banco', async () => {
+      const gincana = await cenario.criarGincana();
+      const corpos = [
+        { nome: `Gincana ${cenario.marca} do líder` },
+        { status: 'ENCERRADA' },
+        { dataInicio: '2099-04-01' },
+        { dataFim: '2099-12-31' },
+        // Nem de carona junto do campo que ele pode mexer.
+        { placarVisivel: false, status: 'ENCERRADA' },
+      ];
+
+      for (const corpo of corpos) {
+        const resposta = await request(app)
+          .patch(`/gincanas/${gincana.id}`)
+          .set('Authorization', `Bearer ${lider.token}`)
+          .send(corpo);
+
+        expect(resposta.status).toBe(403);
+        expect(resposta.body.erro.codigo).toBe('SEM_PERMISSAO');
+        expect(resposta.body.erro.mensagem).toContain('ocultar ou mostrar o placar');
+      }
+
+      const guardada = await prisma.gincana.findUniqueOrThrow({ where: { id: gincana.id } });
+      expect(guardada.nome).toBe(gincana.nome);
+      expect(guardada.status).toBe('PLANEJADA');
+      expect(guardada.placarVisivel).toBe(true);
+      expect(await prisma.registroAuditoria.count({ where: { entidadeId: gincana.id } })).toBe(0);
+    });
+
+    it('o colaborador não alcança a rota nem para ocultar o placar', async () => {
+      const gincana = await cenario.criarGincana();
+
+      const resposta = await request(app)
+        .patch(`/gincanas/${gincana.id}`)
+        .set('Authorization', `Bearer ${colaborador.token}`)
+        .send({ placarVisivel: false });
+
+      expect(resposta.status).toBe(403);
+      expect(resposta.body.erro.codigo).toBe('SEM_PERMISSAO');
+
+      const semToken = await request(app)
+        .patch(`/gincanas/${gincana.id}`)
+        .send({ placarVisivel: false });
+      expect(semToken.status).toBe(401);
+
+      const guardada = await prisma.gincana.findUniqueOrThrow({ where: { id: gincana.id } });
+      expect(guardada.placarVisivel).toBe(true);
     });
   });
 });

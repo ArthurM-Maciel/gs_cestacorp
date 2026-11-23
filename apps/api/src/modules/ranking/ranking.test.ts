@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import { criarApp } from '../../app.js';
 import {
@@ -337,6 +337,91 @@ describe('US11 — ranking da gincana', () => {
 
       const extrato = await request(app).get(`/gincanas/${gincana.id}/ranking/equipes/${alfa.id}`);
       expect(extrato.status).toBe(401);
+    });
+  });
+
+  /**
+   * O interruptor do placar.
+   *
+   * Fica no fim do arquivo e devolve a gincana ao estado visível no `afterEach`: os testes
+   * de cima apuram a mesma gincana e não podem herdar o placar oculto.
+   */
+  describe('com o placar oculto', () => {
+    async function trocarPlacar(visivel: boolean, token: string): Promise<number> {
+      const resposta = await request(app)
+        .patch(`/gincanas/${gincana.id}`)
+        .set('Authorization', token)
+        .send({ placarVisivel: visivel });
+
+      return resposta.status;
+    }
+
+    afterEach(async () => {
+      await request(app)
+        .patch(`/gincanas/${gincana.id}`)
+        .set('Authorization', comoAdmin)
+        .send({ placarVisivel: true });
+    });
+
+    it('o colaborador recebe 403 PLACAR_OCULTO no placar e no extrato', async () => {
+      expect(await trocarPlacar(false, `Bearer ${liderAlfa.token}`)).toBe(200);
+
+      const placarDoColaborador = await request(app)
+        .get(`/gincanas/${gincana.id}/ranking`)
+        .set('Authorization', comoAna);
+
+      expect(placarDoColaborador.status).toBe(403);
+      expect(placarDoColaborador.body.erro.codigo).toBe('PLACAR_OCULTO');
+      expect(placarDoColaborador.body.erro.mensagem).toContain('oculto');
+
+      const extrato = await request(app)
+        .get(`/gincanas/${gincana.id}/ranking/equipes/${alfa.id}`)
+        .set('Authorization', comoAna);
+
+      expect(extrato.status).toBe(403);
+      expect(extrato.body.erro.codigo).toBe('PLACAR_OCULTO');
+    });
+
+    it('líder e administradora continuam vendo o placar e o extrato', async () => {
+      expect(await trocarPlacar(false, comoAdmin)).toBe(200);
+
+      for (const pessoa of [liderAlfa, marieri]) {
+        const token = `Bearer ${pessoa.token}`;
+
+        const placarDaGincana = await request(app)
+          .get(`/gincanas/${gincana.id}/ranking`)
+          .set('Authorization', token);
+        expect(placarDaGincana.status).toBe(200);
+        expect(placarDaGincana.body.linhas).toHaveLength(4);
+
+        const extrato = await request(app)
+          .get(`/gincanas/${gincana.id}/ranking/equipes/${alfa.id}`)
+          .set('Authorization', token);
+        expect(extrato.status).toBe(200);
+        expect(extrato.body.pontos).toBe(285);
+      }
+    });
+
+    it('voltar a mostrar devolve o placar ao colaborador', async () => {
+      expect(await trocarPlacar(false, comoAdmin)).toBe(200);
+      expect(
+        (await request(app).get(`/gincanas/${gincana.id}/ranking`).set('Authorization', comoAna))
+          .status,
+      ).toBe(403);
+
+      expect(await trocarPlacar(true, `Bearer ${liderAlfa.token}`)).toBe(200);
+      expect(
+        (await request(app).get(`/gincanas/${gincana.id}/ranking`).set('Authorization', comoAna))
+          .status,
+      ).toBe(200);
+    });
+
+    it('gincana inexistente continua sendo 404, sem revelar nada sobre o placar', async () => {
+      const resposta = await request(app)
+        .get(`/gincanas/${ID_INEXISTENTE}/ranking`)
+        .set('Authorization', comoAna);
+
+      expect(resposta.status).toBe(404);
     });
   });
 });

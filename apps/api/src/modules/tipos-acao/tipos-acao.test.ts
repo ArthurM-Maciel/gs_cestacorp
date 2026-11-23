@@ -326,7 +326,7 @@ describe('US04 — API de tipos de ação', () => {
       expect(resposta.body.erro.mensagem).toBe('Tipo de ação não encontrado.');
     });
 
-    it('exige administradora: 401 sem token, 403 para líder e colaborador', async () => {
+    it('401 sem token e 403 para o colaborador, sem mexer no que está gravado', async () => {
       const tipo = await criarTipo({
         nome: nomeDeTipo('Protegido'),
         unidade: 'KG',
@@ -335,10 +335,6 @@ describe('US04 — API de tipos de ação', () => {
       const caminho = `/tipos-acao/${tipo.id}`;
 
       expect((await request(app).patch(caminho).send({ ativo: false })).status).toBe(401);
-      expect(
-        (await request(app).patch(caminho).set('Authorization', comoLider).send({ ativo: false }))
-          .status,
-      ).toBe(403);
       expect(
         (
           await request(app)
@@ -350,6 +346,136 @@ describe('US04 — API de tipos de ação', () => {
 
       const guardado = await prisma.tipoAcao.findUniqueOrThrow({ where: { id: tipo.id } });
       expect(guardado.ativo).toBe(true);
+    });
+
+    it('o líder pausa o tipo de ação e a trilha de auditoria registra quem foi', async () => {
+      const tipo = await criarTipo({
+        nome: nomeDeTipo('Pausado pelo líder'),
+        unidade: 'KG',
+        pontosPorUnidade: 6,
+      });
+
+      const pausa = await request(app)
+        .patch(`/tipos-acao/${tipo.id}`)
+        .set('Authorization', comoLider)
+        .send({ ativo: false });
+
+      expect(pausa.status).toBe(200);
+      expect(pausa.body.ativo).toBe(false);
+      // Pausar não encosta na pontuação: o histórico continua inteiro.
+      expect(pausa.body.regraVigente.pontosPorUnidade).toBe(6);
+      expect(pausa.body.regras).toHaveLength(1);
+
+      const auditoria = await prisma.registroAuditoria.findFirst({
+        where: { entidade: 'TipoAcao', entidadeId: tipo.id, acao: 'ALTERACAO' },
+        orderBy: { criadoEm: 'desc' },
+      });
+      expect(auditoria?.autorId).toBe(lider.id);
+      expect(auditoria?.valoresAntes).toMatchObject({ ativo: true });
+      expect(auditoria?.valoresDepois).toMatchObject({ ativo: false });
+
+      // E reativa: a permissão vale para os dois sentidos do interruptor.
+      const reativa = await request(app)
+        .patch(`/tipos-acao/${tipo.id}`)
+        .set('Authorization', comoLider)
+        .send({ ativo: true });
+
+      expect(reativa.status).toBe(200);
+      expect(reativa.body.ativo).toBe(true);
+    });
+
+    it('o líder enxerga o tipo pausado para poder reativá-lo', async () => {
+      const tipo = await criarTipo({
+        nome: nomeDeTipo('Pausado e visível ao líder'),
+        unidade: 'KG',
+        pontosPorUnidade: 2,
+      });
+      await request(app)
+        .patch(`/tipos-acao/${tipo.id}`)
+        .set('Authorization', comoLider)
+        .send({ ativo: false })
+        .expect(200);
+
+      const lista = await request(app)
+        .get(`/gincanas/${gincana.id}/tipos-acao?ativo=false`)
+        .set('Authorization', comoLider);
+      expect(lista.body.map((item: { id: string }) => item.id)).toContain(tipo.id);
+
+      const detalhe = await request(app)
+        .get(`/tipos-acao/${tipo.id}`)
+        .set('Authorization', comoLider);
+      expect(detalhe.status).toBe(200);
+
+      // O colaborador continua sem alcançar o que está pausado.
+      expect(
+        (await request(app).get(`/tipos-acao/${tipo.id}`).set('Authorization', comoColaborador))
+          .status,
+      ).toBe(404);
+    });
+
+    it('o líder não muda o nome do tipo: 403 e nada muda no banco', async () => {
+      const tipo = await criarTipo({
+        nome: nomeDeTipo('Identidade da administradora'),
+        unidade: 'KG',
+        pontosPorUnidade: 3,
+      });
+
+      const resposta = await request(app)
+        .patch(`/tipos-acao/${tipo.id}`)
+        .set('Authorization', comoLider)
+        .send({ nome: nomeDeTipo('Nome do líder') });
+
+      expect(resposta.status).toBe(403);
+      expect(resposta.body.erro.codigo).toBe('SEM_PERMISSAO');
+      expect(resposta.body.erro.mensagem).toContain('pausar ou reativar');
+
+      const guardado = await prisma.tipoAcao.findUniqueOrThrow({ where: { id: tipo.id } });
+      expect(guardado.nome).toBe(tipo.nome);
+    });
+
+    it('o líder não pega carona numa mudança de identidade junto do `ativo`', async () => {
+      const tipo = await criarTipo({
+        nome: nomeDeTipo('Sem carona'),
+        unidade: 'KG',
+        pontosPorUnidade: 3,
+      });
+
+      const resposta = await request(app)
+        .patch(`/tipos-acao/${tipo.id}`)
+        .set('Authorization', comoLider)
+        .send({ ativo: false, nome: nomeDeTipo('Carona') });
+
+      expect(resposta.status).toBe(403);
+
+      const guardado = await prisma.tipoAcao.findUniqueOrThrow({ where: { id: tipo.id } });
+      expect(guardado.nome).toBe(tipo.nome);
+      expect(guardado.ativo).toBe(true);
+      expect(
+        await prisma.registroAuditoria.count({
+          where: { entidade: 'TipoAcao', entidadeId: tipo.id, acao: 'ALTERACAO' },
+        }),
+      ).toBe(0);
+    });
+
+    it('o líder não altera descrição nem exigência de comprovante', async () => {
+      const tipo = await criarTipo({
+        nome: nomeDeTipo('Comprovante protegido'),
+        unidade: 'KG',
+        exigeEvidencia: true,
+        pontosPorUnidade: 3,
+      });
+
+      for (const corpo of [{ descricao: 'Descrição do líder' }, { exigeEvidencia: false }]) {
+        const resposta = await request(app)
+          .patch(`/tipos-acao/${tipo.id}`)
+          .set('Authorization', comoLider)
+          .send(corpo);
+        expect(resposta.status).toBe(403);
+      }
+
+      const guardado = await prisma.tipoAcao.findUniqueOrThrow({ where: { id: tipo.id } });
+      expect(guardado.descricao).toBeNull();
+      expect(guardado.exigeEvidencia).toBe(true);
     });
   });
 

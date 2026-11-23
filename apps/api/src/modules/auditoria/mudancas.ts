@@ -49,6 +49,7 @@ const ROTULOS: Record<string, string> = {
   papel: 'Perfil',
   email: 'E-mail',
   liderId: 'Liderança',
+  placarVisivel: 'Placar visível',
 };
 
 /**

@@ -1,7 +1,9 @@
 import type { LinhaDoExtrato, PeriodoDoRankingQuery } from '@gincana/contracts';
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import type { InternalAxiosRequestConfig } from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { erroDaApi } from '../../simulacao-da-api.js';
 import {
   cenarioDeLancamentos,
   comSessaoDe,
@@ -16,6 +18,11 @@ import {
   type TotalDaEquipe,
 } from '../../simulacao-do-placar.js';
 import { renderizarNaRota } from '../../utilitarios-de-teste.js';
+
+function corpoDa(chamada: ReturnType<typeof vi.fn>, indice = 0): unknown {
+  const requisicao = chamada.mock.calls[indice]?.[0] as InternalAxiosRequestConfig | undefined;
+  return typeof requisicao?.data === 'string' ? JSON.parse(requisicao.data) : requisicao?.data;
+}
 
 /**
  * O relógio é fixado numa quinta-feira, 12/11/2026, às 16:00: a semana é de 09/11 a 15/11 e o
@@ -76,6 +83,31 @@ function abrirPlacar(
   comSessaoDe(papel, { ...rotasDeLancamentos(estado), ...rotas });
   const tela = renderizarNaRota(caminho);
   return { ...tela, estado, gincana, chamadas, chamadasDoExtrato };
+}
+
+/**
+ * Como `abrirPlacar`, mas com `PATCH /gincanas/:id` de mentira: grava o que mudou no
+ * próprio `estado.gincanas`, para a invalidação do TanStack Query devolver o valor novo
+ * na leitura seguinte de "GET /gincanas", exatamente como a API faz.
+ */
+function abrirPlacarComAlternancia(
+  papel: 'LIDER' | 'ADMIN',
+  totaisDo: (periodo: PeriodoDoRankingQuery) => TotalDaEquipe[],
+) {
+  const { estado, gincana } = cenarioDeLancamentos();
+  const { rotas } = rotasDoPlacar(gincana, totaisDo);
+  const atualizar = vi.fn((requisicao: InternalAxiosRequestConfig) => {
+    const dados = JSON.parse(String(requisicao.data)) as { placarVisivel?: boolean };
+    estado.gincanas[0] = { ...estado.gincanas[0]!, ...dados };
+    return { status: 200, dados: estado.gincanas[0] };
+  });
+  comSessaoDe(papel, {
+    ...rotasDeLancamentos(estado),
+    ...rotas,
+    [`PATCH /gincanas/${gincana.id}`]: atualizar,
+  });
+  const tela = renderizarNaRota('/placar');
+  return { ...tela, estado, gincana, atualizar };
 }
 
 const lista = () => screen.findByRole('list', { name: 'Ranking completo' });
@@ -541,6 +573,92 @@ describe('Placar da gincana (US11)', () => {
 
       expect(await screen.findByText('Ainda não há gincana cadastrada')).toBeVisible();
       expect(screen.getByText(/a administradora cadastra a gincana/i)).toBeVisible();
+    });
+  });
+
+  describe('ocultar o placar', () => {
+    it('o líder vê o interruptor, oculta o placar e a mutation manda o payload certo', async () => {
+      const e = equipesDoPrototipo();
+      const { atualizar } = abrirPlacarComAlternancia('LIDER', () => [e.ipe, e.araucaria]);
+      await lista();
+
+      const botao = await screen.findByRole('button', { name: 'Ocultar' });
+      fireEvent.click(botao);
+
+      await waitFor(() => {
+        expect(corpoDa(atualizar)).toEqual({ placarVisivel: false });
+      });
+      expect(await screen.findByRole('button', { name: 'Mostrar' })).toBeVisible();
+      expect(screen.getByText('Placar oculto para o colaborador')).toBeVisible();
+    });
+
+    it('a administradora também vê o interruptor e consegue mostrar de novo', async () => {
+      const e = equipesDoPrototipo();
+      const { estado, gincana } = cenarioDeLancamentos();
+      estado.gincanas[0] = { ...estado.gincanas[0]!, placarVisivel: false };
+      const { rotas } = rotasDoPlacar(gincana, () => [e.ipe, e.araucaria]);
+      const atualizar = vi.fn((requisicao: InternalAxiosRequestConfig) => {
+        const dados = JSON.parse(String(requisicao.data)) as { placarVisivel?: boolean };
+        estado.gincanas[0] = { ...estado.gincanas[0]!, ...dados };
+        return { status: 200, dados: estado.gincanas[0] };
+      });
+      comSessaoDe('ADMIN', {
+        ...rotasDeLancamentos(estado),
+        ...rotas,
+        [`PATCH /gincanas/${gincana.id}`]: atualizar,
+      });
+      renderizarNaRota('/placar');
+      await lista();
+
+      expect(screen.getByText('Placar oculto para o colaborador')).toBeVisible();
+      fireEvent.click(await screen.findByRole('button', { name: 'Mostrar' }));
+
+      await waitFor(() => {
+        expect(corpoDa(atualizar)).toEqual({ placarVisivel: true });
+      });
+      expect(await screen.findByRole('button', { name: 'Ocultar' })).toBeVisible();
+    });
+
+    it('o colaborador não vê o interruptor', async () => {
+      const e = equipesDoPrototipo();
+      abrirPlacar('COLABORADOR', () => [e.ipe, e.araucaria]);
+      await lista();
+
+      expect(screen.queryByRole('button', { name: 'Ocultar' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Mostrar' })).not.toBeInTheDocument();
+    });
+
+    it('o colaborador vê um estado vazio amigável quando o placar está oculto, sem erro técnico', async () => {
+      const { estado, gincana } = cenarioDeLancamentos();
+      comSessaoDe('COLABORADOR', {
+        ...rotasDeLancamentos(estado),
+        [`GET /gincanas/${gincana.id}/ranking`]: () => ({
+          status: 403,
+          dados: erroDaApi('PLACAR_OCULTO', 'O placar está oculto neste momento.'),
+        }),
+      });
+
+      renderizarNaRota('/placar');
+
+      expect(await screen.findByText('O placar está oculto neste momento')).toBeVisible();
+      expect(
+        screen.getByText(/líder ou a administradora ocultaram temporariamente/i),
+      ).toBeVisible();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Tentar de novo' })).not.toBeInTheDocument();
+    });
+
+    it('qualquer outro erro do placar continua mostrando o estado de erro genérico', async () => {
+      const { estado, gincana } = cenarioDeLancamentos();
+      comSessaoDe('COLABORADOR', {
+        ...rotasDeLancamentos(estado),
+        [`GET /gincanas/${gincana.id}/ranking`]: () => ({ status: 500 }),
+      });
+
+      renderizarNaRota('/placar');
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(/servidor está com problemas/i);
+      expect(screen.queryByText('O placar está oculto neste momento')).not.toBeInTheDocument();
     });
   });
 });

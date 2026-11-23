@@ -4,13 +4,15 @@ import type {
   PeriodoDoRankingQuery,
   Ranking,
   Unidade,
+  UsuarioAutenticado,
 } from '@gincana/contracts';
 
 import { prisma } from '../../db.js';
-import { naoEncontrado } from '../../middlewares/erros.js';
+import { ErroDaAplicacao, naoEncontrado } from '../../middlewares/erros.js';
 import { paraDataDoBanco } from '../gincanas/service.js';
 
 import { classificarEquipes, type EquipeClassificada, type TotalDaEquipe } from './ordenacao.js';
+import { podeVerPlacar } from './policy.js';
 
 /**
  * US11 — o placar por equipe.
@@ -67,12 +69,28 @@ function periodoDaConsulta(filtros: PeriodoDoRankingQuery): Periodo {
   return { desde: filtros.desde ?? null, ate: filtros.ate ?? null };
 }
 
+/**
+ * O placar está oculto neste momento.
+ *
+ * Código próprio, e não o `SEM_PERMISSAO` genérico, porque o front precisa distinguir
+ * "você nunca teria acesso a isso" de "está escondido agora, volte depois" — a primeira
+ * mensagem assusta sem motivo.
+ */
+export function placarOculto(): ErroDaAplicacao {
+  return new ErroDaAplicacao(
+    403,
+    'PLACAR_OCULTO',
+    'O placar está oculto para colaboradores neste momento. ' +
+      'Fale com o líder da sua equipe ou com a administradora.',
+  );
+}
+
 async function carregarGincana(
   gincanaId: string,
-): Promise<{ id: string; nome: string; ano: number }> {
+): Promise<{ id: string; nome: string; ano: number; placarVisivel: boolean }> {
   const gincana = await prisma.gincana.findUnique({
     where: { id: gincanaId },
-    select: { id: true, nome: true, ano: true },
+    select: { id: true, nome: true, ano: true, placarVisivel: true },
   });
 
   if (!gincana) {
@@ -124,18 +142,30 @@ async function apurar(gincanaId: string, periodo: Periodo): Promise<EquipeClassi
   return classificarEquipes(linhas);
 }
 
-/** US11 — o placar da gincana. Autenticado, qualquer perfil: o placar é de todo mundo. */
+/**
+ * US11 — o placar da gincana. Autenticado, qualquer perfil: o placar é de todo mundo.
+ *
+ * A exceção é o interruptor por gincana: com o placar oculto, quem não administra nem
+ * lidera recebe 403 `PLACAR_OCULTO`. A conferência é aqui, no servidor, e não na tela — o
+ * contrário deixaria o placar a um `curl` de distância.
+ */
 export async function montarRanking(
+  usuario: UsuarioAutenticado,
   gincanaId: string,
   filtros: PeriodoDoRankingQuery,
 ): Promise<Ranking> {
   const gincana = await carregarGincana(gincanaId);
+
+  if (!podeVerPlacar(usuario, gincana)) {
+    throw placarOculto();
+  }
+
   const periodo = periodoDaConsulta(filtros);
   const classificadas = await apurar(gincana.id, periodo);
 
   return {
     gincanaId: gincana.id,
-    gincana,
+    gincana: { id: gincana.id, nome: gincana.nome, ano: gincana.ano },
     desde: periodo.desde,
     ate: periodo.ate,
     apuradoEm: new Date().toISOString(),
@@ -157,13 +187,22 @@ export async function montarRanking(
  *
  * A posição vem da mesma apuração do placar: duas telas que discordassem sobre quem está
  * em 2º seriam pior do que não ter a tela de detalhe.
+ *
+ * Ocultar o placar esconde a tela inteira, extrato incluído: deixar o detalhe aberto seria
+ * reconstruir o pódio equipe por equipe.
  */
 export async function montarExtratoDaEquipe(
+  usuario: UsuarioAutenticado,
   gincanaId: string,
   equipeId: string,
   filtros: PeriodoDoRankingQuery,
 ): Promise<ExtratoDaEquipe> {
   const gincana = await carregarGincana(gincanaId);
+
+  if (!podeVerPlacar(usuario, gincana)) {
+    throw placarOculto();
+  }
+
   const periodo = periodoDaConsulta(filtros);
 
   const classificadas = await apurar(gincana.id, periodo);

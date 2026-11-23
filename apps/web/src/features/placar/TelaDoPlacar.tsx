@@ -1,14 +1,16 @@
-import type { LinhaDoRanking, Ranking } from '@gincana/contracts';
+import type { Gincana, LinhaDoRanking, Ranking } from '@gincana/contracts';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { CabecalhoDePagina } from '../../components/ui/CabecalhoDePagina.js';
-import { botaoPrimario } from '../../components/ui/estilos-de-botao.js';
+import { botaoContorno, botaoPrimario } from '../../components/ui/estilos-de-botao.js';
 import { EstadoCarregando, EstadoDeErro, EstadoVazio } from '../../components/ui/Estados.js';
 import { mensagemDeErro } from '../../lib/api.js';
+import { codigoDoErro } from '../../lib/erro-da-api.js';
 import { formatarData } from '../../lib/formatar-data.js';
 import { descreverInstante } from '../../lib/formatar-instante.js';
 import { useSessao } from '../../lib/sessao.js';
+import { useAtualizarGincana } from '../gincanas/gincanas-api.js';
 import { SeletorDeGincana } from '../gincanas/SeletorDeGincana.js';
 import { useGincanaSelecionada } from '../gincanas/useGincanaSelecionada.js';
 import { ExtratoDaEquipe } from './ExtratoDaEquipe.js';
@@ -28,6 +30,46 @@ function descreverPeriodo(periodo: PeriodoDoPlacar, ranking: Ranking | undefined
   return ranking?.desde != null && ranking.ate != null
     ? `Esta semana (${diaEMes(ranking.desde)} a ${diaEMes(ranking.ate)})`
     : 'Esta semana';
+}
+
+/**
+ * Interruptor único por gincana: líder e administradora ocultam o placar inteiro (ranking
+ * e extrato) da visão do colaborador, por exemplo durante a apuração. Os dois continuam
+ * vendo o placar mesmo oculto — é a API que garante isso, não esta tela.
+ */
+function VisibilidadeDoPlacar({ gincana }: { gincana: Gincana }) {
+  const atualizar = useAtualizarGincana();
+  const visivel = gincana.placarVisivel;
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-cartao bg-superficie p-4 shadow-sm">
+      <div className="min-w-0">
+        <p className="font-semibold">
+          {visivel ? 'Placar visível para o colaborador' : 'Placar oculto para o colaborador'}
+        </p>
+        <p className="text-sm text-texto-suave">
+          {visivel
+            ? 'Qualquer colaborador abre o ranking e o extrato por equipe.'
+            : 'O colaborador não alcança o ranking nem o extrato até você mostrar de novo.'}
+        </p>
+        {atualizar.isError && (
+          <p role="alert" className="mt-2 text-sm font-medium text-recusado">
+            {mensagemDeErro(atualizar.error)}
+          </p>
+        )}
+      </div>
+      <button
+        type="button"
+        disabled={atualizar.isPending}
+        onClick={() => {
+          atualizar.mutate({ id: gincana.id, dados: { placarVisivel: !visivel } });
+        }}
+        className={`${botaoContorno} shrink-0`}
+      >
+        {atualizar.isPending ? 'Salvando…' : visivel ? 'Ocultar' : 'Mostrar'}
+      </button>
+    </div>
+  );
 }
 
 interface PropsDoConteudo {
@@ -95,8 +137,10 @@ export function TelaDoPlacar() {
   const [aberta, setAberta] = useState<LinhaDoRanking | null>(null);
 
   const ehAdmin = usuario?.papel === 'ADMIN';
+  const ehLider = usuario?.papel === 'LIDER';
   // A administradora não pertence a nenhuma equipe: ninguém aparece como "sua equipe".
   const minhaEquipeId = usuario?.equipeId ?? null;
+  const placarOculto = codigoDoErro(ranking.error) === 'PLACAR_OCULTO';
 
   function escolherPeriodo(novo: PeriodoDoPlacar) {
     definirParametros(
@@ -141,6 +185,8 @@ export function TelaDoPlacar() {
         <SeletorDeGincana gincanas={lista} escolhida={escolhida} aoEscolher={escolher} />
       )}
 
+      {escolhida !== null && (ehAdmin || ehLider) && <VisibilidadeDoPlacar gincana={escolhida} />}
+
       {gincanas.isPending && <EstadoCarregando mensagem="Carregando a gincana…" />}
 
       {gincanas.isError && (
@@ -173,7 +219,16 @@ export function TelaDoPlacar() {
         <EstadoCarregando mensagem="Carregando o placar…" />
       )}
 
-      {escolhida !== null && ranking.isError && (
+      {escolhida !== null && ranking.isError && placarOculto && (
+        // Não é uma falha: o líder ou a administradora escolheram esconder o placar por um
+        // tempo. ADMIN e LIDER nunca caem aqui, porque o servidor sempre deixa os dois verem.
+        <EstadoVazio
+          titulo="O placar está oculto neste momento"
+          descricao="O líder ou a administradora ocultaram temporariamente o ranking e o extrato por equipe. Volte mais tarde."
+        />
+      )}
+
+      {escolhida !== null && ranking.isError && !placarOculto && (
         <EstadoDeErro
           mensagem={mensagemDeErro(ranking.error)}
           aoTentarDeNovo={() => {

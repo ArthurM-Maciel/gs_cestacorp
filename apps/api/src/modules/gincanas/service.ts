@@ -1,8 +1,16 @@
-import type { AtualizarGincana, CriarGincana, Gincana } from '@gincana/contracts';
+import type {
+  AtualizarGincana,
+  CriarGincana,
+  Gincana,
+  UsuarioAutenticado,
+} from '@gincana/contracts';
 
 import { prisma } from '../../db.js';
-import { ErroDaAplicacao, conflito, naoEncontrado } from '../../middlewares/erros.js';
+import { ErroDaAplicacao, conflito, naoEncontrado, semPermissao } from '../../middlewares/erros.js';
 import { comUnicidade } from '../../prisma-erros.js';
+import { registrarAuditoria } from '../auditoria/registrar.js';
+
+import { podeAtualizarGincana } from './policy.js';
 
 /** O que lemos do banco. A gincana não tem campo sensível, mas o `select` é explícito. */
 const selecaoDaGincana = {
@@ -12,6 +20,7 @@ const selecaoDaGincana = {
   dataInicio: true,
   dataFim: true,
   status: true,
+  placarVisivel: true,
 } as const;
 
 interface GincanaDoBanco {
@@ -21,6 +30,7 @@ interface GincanaDoBanco {
   dataInicio: Date;
   dataFim: Date;
   status: Gincana['status'];
+  placarVisivel: boolean;
 }
 
 /**
@@ -44,6 +54,7 @@ function montarGincana(gincana: GincanaDoBanco): Gincana {
     dataInicio: paraDataDoContrato(gincana.dataInicio),
     dataFim: paraDataDoContrato(gincana.dataFim),
     status: gincana.status,
+    placarVisivel: gincana.placarVisivel,
   };
 }
 
@@ -99,34 +110,77 @@ export async function buscarGincana(id: string): Promise<Gincana> {
   return montarGincana(gincana);
 }
 
+const soOcultaOuMostraOPlacar = () =>
+  semPermissao(
+    'Como líder de equipe você pode ocultar ou mostrar o placar, mas não alterar o nome, o ' +
+      'período ou a situação da gincana. Peça essa alteração à administradora.',
+  );
+
 /**
  * O `PATCH` muda um campo de cada vez, então o período precisa ser conferido contra o
  * que já está gravado: mandar só `dataFim` tem de esbarrar na `dataInicio` do banco.
+ *
+ * A autorização por campo vem antes de qualquer toque no banco: o líder só passa daqui se
+ * o corpo trouxer exclusivamente `placarVisivel`.
+ *
+ * Esconder ou revelar o placar deixa rastro na trilha de auditoria, na mesma transação do
+ * `update` — é uma decisão que muda o que a gincana mostra a quem participa, e precisa ter
+ * autor e instante. As demais alterações de gincana seguem como antes, sem auditoria: esse
+ * é um buraco anterior a esta mudança e tapá-lo aqui misturaria duas coisas.
  */
-export async function atualizarGincana(id: string, dados: AtualizarGincana): Promise<Gincana> {
-  const atual = await prisma.gincana.findUnique({ where: { id }, select: selecaoDaGincana });
-
-  if (!atual) {
-    throw naoEncontrado('Gincana não encontrada.');
+export async function atualizarGincana(
+  usuario: UsuarioAutenticado,
+  id: string,
+  dados: AtualizarGincana,
+  autorId: string,
+): Promise<Gincana> {
+  if (!podeAtualizarGincana(usuario, dados)) {
+    throw soOcultaOuMostraOPlacar();
   }
 
-  const dataInicio = dados.dataInicio ? paraDataDoBanco(dados.dataInicio) : atual.dataInicio;
-  const dataFim = dados.dataFim ? paraDataDoBanco(dados.dataFim) : atual.dataFim;
+  return prisma.$transaction(async (tx) => {
+    const atual = await tx.gincana.findUnique({ where: { id }, select: selecaoDaGincana });
 
-  if (dataFim < dataInicio) {
-    throw periodoInvalido();
-  }
+    if (!atual) {
+      throw naoEncontrado('Gincana não encontrada.');
+    }
 
-  const gincana = await prisma.gincana.update({
-    where: { id },
-    data: {
-      nome: dados.nome,
-      dataInicio: dados.dataInicio ? dataInicio : undefined,
-      dataFim: dados.dataFim ? dataFim : undefined,
-      status: dados.status,
-    },
-    select: selecaoDaGincana,
+    const dataInicio = dados.dataInicio ? paraDataDoBanco(dados.dataInicio) : atual.dataInicio;
+    const dataFim = dados.dataFim ? paraDataDoBanco(dados.dataFim) : atual.dataFim;
+
+    if (dataFim < dataInicio) {
+      throw periodoInvalido();
+    }
+
+    const trocaOPlacar =
+      dados.placarVisivel !== undefined && dados.placarVisivel !== atual.placarVisivel;
+
+    const gincana = await tx.gincana.update({
+      where: { id },
+      data: {
+        nome: dados.nome,
+        dataInicio: dados.dataInicio ? dataInicio : undefined,
+        dataFim: dados.dataFim ? dataFim : undefined,
+        status: dados.status,
+        placarVisivel: dados.placarVisivel,
+      },
+      select: selecaoDaGincana,
+    });
+
+    if (trocaOPlacar) {
+      await registrarAuditoria(tx, {
+        entidade: 'Gincana',
+        entidadeId: id,
+        acao: 'ALTERACAO',
+        autorId,
+        valoresAntes: { placarVisivel: atual.placarVisivel },
+        valoresDepois: { placarVisivel: gincana.placarVisivel },
+        descricao: gincana.placarVisivel
+          ? `O placar da gincana "${gincana.nome}" voltou a ficar visível para todos.`
+          : `O placar da gincana "${gincana.nome}" foi ocultado dos colaboradores.`,
+      });
+    }
+
+    return montarGincana(gincana);
   });
-
-  return montarGincana(gincana);
 }

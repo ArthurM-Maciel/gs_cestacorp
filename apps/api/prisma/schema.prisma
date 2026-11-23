@@ -90,6 +90,11 @@ model Gincana {
   dataFim    DateTime      @db.Date
   status     StatusGincana @default(PLANEJADA)
 
+  // Interruptor único por gincana: oculta o placar (ranking e extrato) da visão do
+  // colaborador. Líder e administradora continuam vendo mesmo quando oculto. Nasce
+  // visível, e é esse default que preserva o comportamento das gincanas já cadastradas.
+  placarVisivel Boolean @default(true)
+
   equipes     Equipe[]
   tiposAcao   TipoAcao[]
   lancamentos Lancamento[]

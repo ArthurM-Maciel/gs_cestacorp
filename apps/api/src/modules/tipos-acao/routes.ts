@@ -72,16 +72,22 @@ tiposAcaoRouter.get<{ id: string }, TipoAcaoComHistorico>(
   },
 );
 
-/** Muda a identidade do tipo de ação. A pontuação tem rota própria, logo abaixo. */
+/**
+ * Muda a identidade do tipo de ação. A pontuação tem rota própria, logo abaixo.
+ *
+ * O papel abre a porta para a administradora e para o líder; quais campos do corpo cada um
+ * pode mexer é decisão da `policy.ts`, conferida no serviço. O líder entra aqui só para
+ * pausar e reativar.
+ */
 tiposAcaoRouter.patch<{ id: string }, TipoAcaoComHistorico, AtualizarTipoAcao>(
   '/tipos-acao/:id',
   autenticacao,
-  exigePapel('ADMIN'),
+  exigePapel('ADMIN', 'LIDER'),
   validar({ params: parametroId, body: atualizarTipoAcaoSchema }),
   async (req, res) => {
     const { id } = parametrosValidados(req, parametroId);
     const autor = usuarioDaRequisicao(req);
-    res.status(200).json(await atualizarTipoAcao(id, req.body, autor.id));
+    res.status(200).json(await atualizarTipoAcao(autor, id, req.body, autor.id));
   },
 );
 

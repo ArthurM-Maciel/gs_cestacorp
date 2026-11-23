@@ -179,7 +179,6 @@ describe('Layout da administradora', () => {
       ['LIDER', '/gincanas'],
       ['LIDER', '/equipes'],
       ['LIDER', '/colaboradores'],
-      ['LIDER', '/tipos-acao'],
       ['LIDER', '/auditoria'],
     ])('%s não abre %s nem vê o menu da administradora', async (papel, caminho) => {
       gravarToken('token-de-teste');

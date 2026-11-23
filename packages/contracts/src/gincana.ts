@@ -23,12 +23,19 @@ export const criarGincanaSchema = z
   });
 export type CriarGincana = z.infer<typeof criarGincanaSchema>;
 
+/**
+ * `placarVisivel` entra aqui e **não** em `criarGincanaSchema`: toda gincana nasce com o
+ * placar à vista (o padrão da coluna) e esconder é uma decisão tomada depois, durante a
+ * apuração. É o único campo que o líder pode alterar — quem decide isso é a `policy.ts`
+ * do módulo, no servidor.
+ */
 export const atualizarGincanaSchema = z
   .object({
     nome: z.string().trim().min(3).max(120).optional(),
     dataInicio: dataSchema.optional(),
     dataFim: dataSchema.optional(),
     status: statusGincanaSchema.optional(),
+    placarVisivel: z.boolean().optional(),
   })
   .refine((g) => Object.keys(g).length > 0, { message: 'Informe ao menos um campo.' });
 export type AtualizarGincana = z.infer<typeof atualizarGincanaSchema>;
@@ -40,5 +47,7 @@ export const gincanaSchema = z.object({
   dataInicio: z.string(),
   dataFim: z.string(),
   status: statusGincanaSchema,
+  /** Quando `false`, o colaborador não alcança o placar nem o extrato por equipe. */
+  placarVisivel: z.boolean(),
 });
 export type Gincana = z.infer<typeof gincanaSchema>;

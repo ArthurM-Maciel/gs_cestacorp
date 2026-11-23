@@ -1,5 +1,5 @@
 import type { ItemDoMenu } from '../../components/ui/MoldeDeNavegacao.js';
-import { IconeAprovacoes, IconePlacar } from '../administracao/IconesDoMenu.js';
+import { IconeAprovacoes, IconePlacar, IconeRegras } from '../administracao/IconesDoMenu.js';
 import { IconeInicio, IconeRegistrar } from './IconesDoMenu.js';
 
 const inicio: ItemDoMenu = {
@@ -28,7 +28,11 @@ export function itensDoColaborador(): readonly ItemDoMenu[] {
   return [inicio, registrar, placar];
 }
 
-/** O líder ganha a fila de aprovações, com o contador de pendentes no selo. */
+/**
+ * O líder ganha a fila de aprovações, com o contador de pendentes no selo, e "Regras" para
+ * pausar/reativar tipo de ação (ele não cria nem edita identidade — isso é só da
+ * administradora).
+ */
 export function itensDoLider(pendentes: number): readonly ItemDoMenu[] {
   return [
     inicio,
@@ -42,5 +46,6 @@ export function itensDoLider(pendentes: number): readonly ItemDoMenu[] {
     },
     registrar,
     placar,
+    { chave: 'regras', rotulo: 'Regras', Icone: IconeRegras, caminho: '/tipos-acao' },
   ];
 }
